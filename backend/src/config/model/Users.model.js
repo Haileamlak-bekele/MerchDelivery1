@@ -1,4 +1,6 @@
-import mongoose from "mongoose";
+// import mongoose from "mongoose";
+const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
@@ -28,13 +30,22 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "dsp", "merchant", "customer"],
       default: "customer",
     },
-    status: { type: String, enum: ["active", "inactive"] },
+    status: {
+      type: String,
+      enum: ["active", "inactive"],
+      default: "active",
+    },
   },
   {
     timestamps: true,
   }
 );
 
+// Password comparison method
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
 const User = mongoose.model("User", userSchema);
 
-export default User;
+module.exports = User;

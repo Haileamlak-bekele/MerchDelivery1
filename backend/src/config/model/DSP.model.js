@@ -1,4 +1,5 @@
-import mongoose from "mongoose";
+// import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const dspSchema = new mongoose.Schema(
   {
@@ -20,9 +21,14 @@ const dspSchema = new mongoose.Schema(
       enum: ["Available", "Unavailable"],
       default: "Available",
     },
+    approvalStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
   },
 );
 
 const DSP = mongoose.model("DSP", dspSchema);
 
-export default DSP;
+module.exports = DSP;
