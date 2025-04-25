@@ -5,6 +5,7 @@
 
 const express = require("express");
 const dotenv = require("dotenv");
+const cors = require("cors");
 const dbConnect = require("./src/config/dbConnect.js");
 const userRoutes = require("./routes/user.routes.js");
 const AdminRoutes = require("./routes/admin.routes.js");
@@ -17,6 +18,14 @@ dbConnect();
 const app = express();
 
 const port = process.env.PORT;
+
+// Allow requests from your frontend
+app.use(cors({
+  origin: 'http://localhost:5173', // Allow the frontend from port 5173
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow these methods
+  credentials: true // If you're using cookies or sessions, include credentials
+}));
+
 //middleware
 app.use(express.json());
 app.use((req, res, next) => {
