@@ -45,7 +45,7 @@ const addUser = async (req, res) => {
       password: hashedPassword,
       role,
       phoneNumber,
-      status,
+      
     });
 
     try {
