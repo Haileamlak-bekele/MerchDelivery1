@@ -63,6 +63,15 @@ const addUser = async (req, res) => {
         await newMerchant.save();
       }
 
+      //If the role is 'customer', create the customer record
+      if (role === "customer") {
+        const newCustomer = new customer({
+          userId: savedUser._id,
+          phoneNumber,
+        });
+        await newCustomer.save();
+      };
+
       // If the role is 'dsp', create the dsp record
       if (role === "dsp") {
         const newDsp = new dsp({
