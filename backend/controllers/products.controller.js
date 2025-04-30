@@ -66,10 +66,22 @@ const deleteProduct = async (req, res) => {
   res.json({ message: "Product deleted" });
 };
 
+//Get all products for customers
+const getAllProducts = async (req, res) => {
+  try {
+    const products = await Product.find({})
+      .populate('merchant', 'storeName location'); // only show necessary fields
+    res.status(200).json({ success: true, products });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch products', error: err.message });
+  }
+};
+
 module.exports = {
   createProduct,
   getMyProducts,
   updateProduct,
   deleteProduct,
   getSingleProduct,
+  getAllProducts,
 };
