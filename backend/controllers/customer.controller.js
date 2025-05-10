@@ -1,6 +1,6 @@
 const Product = require("../src/config/model/Products.model.js");
 const merchant = require("../src/config/model/Merchant.model.js");
-const Customer = require("../src/config/model/Customers.model.js");
+const Customer = require('../src/config/model/Customers.model.js');
 const user = require("../src/config/model/Users.model.js");
 
 
@@ -37,40 +37,47 @@ const getProductDetails = async (req, res) => {
   }
 };
 
-//add to cart
 const addToCart = async (req, res) => {
   try {
-    const customerId = req.user.id; // assume user is authenticated
-    
+    const customerId = req.user.id; // Assume user is authenticated
     const { productId, quantity } = req.body;
 
-    const customer = await user.findById(customerId);
-   
-    if (!customer) return res.status(404).json({ message: 'Customer not found' });
+    console.log('Customer ID:', customerId);
+    console.log('Product ID:', productId, 'Quantity:', quantity);
+    console.log('Customer ID:', customerId);
 
-    const product = await Product.findById(productId);
-   
-    if (!product) return res.status(404).json({ message: 'Product not found' });
-
-    if (!customer.cart) {
-      customer.cart = [];
+    // Find the customer
+    const customer = await Customer.findById(customerId);
+    if (!customer) {
+      return res.status(404).json({ message: 'Customer not found' });
     }
-
-    const cartItem = customer.cart.find(item => item.productId.toString() === productId);
-
-    if (cartItem) {
-      cartItem.quantity += quantity;
-    } else {
-      customer.cart.push({ productId, quantity });
+     // Find the product
+     const product = await Product.findById(productId);
+     if (!product) {
+       return res.status(404).json({ message: 'Product not found' });
+     }
+ 
+     // Check if the product is already in the cart
+     const cartItem = customer.cart.find(
+       (item) => item.productId.toString() === productId
+     );
+ 
+     if (cartItem) {
+       // Update the quantity if the product is already in the cart
+       cartItem.quantity += quantity;
+     } else {
+       // Add the product to the cart
+       customer.cart.push({ productId, quantity });
+     }
+ 
+     // Save the updated customer document
+     await customer.save();
+     res.status(200).json({ message: 'Product added to cart', cart: customer.cart });
+    } catch (err) {
+      console.error('Error in addToCart:', err);
+      res.status(500).json({ message: 'Server error' });
     }
-
-    await customer.save();
-    res.status(200).json({ message: 'Product added to cart', cart: customer.cart });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+  };
 
 //view cart
 const viewCart = async (req, res) => {
@@ -83,10 +90,10 @@ const viewCart = async (req, res) => {
     if (!customer) {
       return res.status(404).json({ message: 'Customer not found' });
     }
-    // const allCartItems = await Cart.find();
+    // const allCartItems = await customer.find();
     // console.log(allCartItems);
 
-    const cartItems = await Customer.find({ userId: customer._id }).populate('productId');
+    const cartItems = await customer.find({ userId: customer._id }).populate('productId');
     console.log(cartItems);
 
     res.status(200).json({ cart: cartItems });
