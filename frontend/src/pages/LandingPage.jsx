@@ -79,7 +79,7 @@ function LandingPage({ theme, toggleTheme }) {
                  </a>
               ))}
               {/* Login Button - Re-themed */}
-              <a href="/login" // Link to separate auth page (assuming setup with router later)
+              <a href="/auth" // Link to separate auth page (assuming setup with router later)
                  className="ml-4 bg-emerald-500 text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 flex items-center shadow-sm hover:shadow-md transform hover:scale-105 transition-all duration-200 ease-in-out">
                 <LogIn className="h-4 w-4 mr-1.5" /> Login
               </a>

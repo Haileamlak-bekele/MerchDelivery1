@@ -194,15 +194,64 @@ export function AuthPage() {
     // --- Form Submission ---
 
     // Handles login submission
-    const handleLoginSubmit = (e) => {
+    const handleLoginSubmit = async (e) => {
         e.preventDefault();
-        if (validateForm()) {
-            console.log("Login Data:", { email: formData.email });
-            alert('Login Submitted! Check console.');
-        } else {
-             console.log("Login validation failed:", errors);
+    
+        if (!validateForm()) {
+            console.log("Login validation failed:", errors);
+            return;
+        }
+    
+        try {
+            const response = await fetch('http://localhost:5000/users/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: formData.password
+                })
+            });
+           
+    
+            const result = await response.json();
+    
+            if (response.ok) {
+                console.log("Login successful:", result);
+    
+                // Optional: store token in localStorage/sessionStorage
+                localStorage.setItem('token', result.token);
+    
+                const role = result.user.role;
+                console.log("first");
+    
+                // Redirect based on role
+                switch (role) {
+                    case 'admin':
+                        window.location.href = '/Admin'; // Adjust this path as needed
+                        break;
+                    case 'merchant':
+                        window.location.href = '/merchant';
+                        break;
+                    case 'dsp':
+                        window.location.href = '/dsp';
+                        break;
+                    case 'customer':
+                        window.location.href = '/customer';
+                        break;
+                    default:
+                        alert('Role not recognized');
+                }
+            } else {
+                alert("Login failed: " + (result.message || "some error occcurs, try again"));
+            }
+        } catch (error) {
+            console.error("Login error:", error);
+            alert("An error occurred during login.");
         }
     };
+    
 
     // Handles sign up submission
     const handleSignupSubmit = (e) => {
