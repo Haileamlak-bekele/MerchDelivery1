@@ -11,14 +11,15 @@ const {
   deleteProduct,
   getSingleProduct,
 } = require('../controllers/products.controller.js');
+const { uploadProductImage } = require('../middleware/productimage.js');
 
-const {getMyProfile,updateMyProfile} = require('../controllers/profile.controller.js');
+const { getMyProfile, updateMyProfile } = require('../controllers/profile.controller.js');
 
 // Protect product routes with authentication and merchant approval middleware
-router.post('/products', authenticate, isApprovedMerchant, createProduct);
+router.post('/products', authenticate, isApprovedMerchant, uploadProductImage, createProduct);
 router.get('/products', authenticate, isApprovedMerchant, getMyProducts);
 router.get('/products/:id', authenticate, isApprovedMerchant, getSingleProduct);
-router.put('/products/:id', authenticate, isApprovedMerchant, updateProduct);
+router.put('/products/:id', authenticate, isApprovedMerchant, uploadProductImage, updateProduct);
 router.delete('/products/:id', authenticate, isApprovedMerchant, deleteProduct);
 
 //profile routes

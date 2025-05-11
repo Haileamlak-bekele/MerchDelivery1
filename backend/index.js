@@ -6,6 +6,8 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const path = require("path");
+
 const dbConnect = require("./src/config/dbConnect.js");
 const userRoutes = require("./routes/user.routes.js");
 const AdminRoutes = require("./routes/admin.routes.js");
@@ -26,6 +28,9 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow these methods
   credentials: true // If you're using cookies or sessions, include credentials
 }));
+
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 //middleware
 app.use(express.json());

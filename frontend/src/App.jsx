@@ -5,9 +5,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
 import CustomerInterface from './pages/CustomerInterface';
-import MerchantInventoryMng from './pages/MerchantInventoryMng';
 import LiveDeliveryTracking from './pages/LiveDeliveryTracking';
 import { Sun, Moon } from 'lucide-react';
+import MerchantInventoryPage from './pages/MerchantInventoryPage';
 
 function AuthWrapper({ role }) {
   // Redirect based on role
@@ -69,7 +69,7 @@ export default function AppRouter() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/customer" element={<CustomerInterface />} />
-          <Route path="/merchant" element={<MerchantInventoryMng />} />
+          <Route path="/merchant" element={<MerchantInventoryPage />} />
           <Route path="/dsp" element={<LiveDeliveryTracking />} />
           <Route path="/redirect" element={<AuthWrapper role={localStorage.getItem('userRole')} />} />
           <Route path="*" element={<Navigate to="/" />} />
