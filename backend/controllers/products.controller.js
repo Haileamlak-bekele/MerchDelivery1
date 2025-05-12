@@ -1,5 +1,7 @@
 const Product = require("../src/config/model/Products.model.js");
 const merchant = require("../src/config/model/Merchant.model.js");
+const fs = require('fs');
+const path = require('path');
 
 const createProduct = async (req, res) => {
   const { name, description, price, stock_quantity, category } = req.body;
@@ -10,6 +12,9 @@ const createProduct = async (req, res) => {
   }
 
   try {
+    // Log the file information for debugging
+    console.log('File information:', req.file);
+    
     const product = await Product.create({
       merchantId: req.merchant._id,
       name,
@@ -17,8 +22,10 @@ const createProduct = async (req, res) => {
       price,
       stock_quantity,
       category,
+      image: req.file ? `/uploads/products/${req.file.filename}` : null,
     });
 
+    console.log('Created product:', product);
     res.status(201).json({ message: "Product created", product });
   } catch (error) {
     console.error("Error creating product:", error);
@@ -50,7 +57,28 @@ const updateProduct = async (req, res) => {
 
   if (!product) return res.status(404).json({ message: "Product not found" });
 
-  Object.assign(product, req.body);
+  // If a new image is uploaded, delete the old one
+  if (req.file) {
+    if (product.image) {
+      const oldImagePath = path.join(__dirname, '..', product.image);
+      fs.unlink(oldImagePath, (err) => {
+        if (err) {
+          console.error('Failed to delete old image:', err.message);
+        } else {
+          console.log('Old image deleted:', oldImagePath);
+        }
+      });
+    }
+    product.image = `/uploads/products/${req.file.filename}`;
+  }
+
+  // Update other fields
+  product.name = req.body.name || product.name;
+  product.description = req.body.description || product.description;
+  product.price = req.body.price || product.price;
+  product.stock_quantity = req.body.stock_quantity || product.stock_quantity;
+  product.category = req.body.category || product.category;
+
   await product.save();
 
   res.json({ message: "Product updated", product });
