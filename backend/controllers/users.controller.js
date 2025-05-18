@@ -14,10 +14,9 @@ const addUser = async (req, res) => {
     phoneNumber,
     storeName,
     location,
-    tradeLicense,
     vehicleDetails,
-    drivingLicense,
   } = req.body;
+  
 
   // Validate required fields
   if (!name || !email || !password || !phoneNumber) {
@@ -57,7 +56,7 @@ const addUser = async (req, res) => {
           userId: savedUser._id,
           storeName,
           location,
-          tradeLicense,
+          tradeLicense:req.file ? `/uploads/License/${req.file.filename}` : null,
         });
 
         await newMerchant.save();
@@ -77,7 +76,8 @@ const addUser = async (req, res) => {
         const newDsp = new dsp({
           userId: savedUser._id,
           vehicleDetails,
-          drivingLicense,
+          drivingLicense :req.file ? `/uploads/License/${req.file.filename}` : null,
+  
         });
         await newDsp.save();
       }
