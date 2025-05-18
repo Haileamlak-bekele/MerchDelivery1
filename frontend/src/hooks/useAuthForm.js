@@ -190,7 +190,7 @@ export const useAuthForm = () => {
                     formDataToSend.append('storeName', formData.businessName);
                     formDataToSend.append('location', formData.locationLink);
                     if (formData.documentation) {
-                        formDataToSend.append('tradeLicense', formData.documentation);
+                        formDataToSend.append('License', formData.documentation);
                     }
                 } else if (selectedRole === ROLES.DSP) {
                     formDataToSend.append('vehicleDetails', JSON.stringify({
@@ -198,7 +198,7 @@ export const useAuthForm = () => {
                         plateNumber: formData.plateNumber
                     }));
                     if (formData.drivingLicense) {
-                        formDataToSend.append('drivingLicense', formData.drivingLicense);
+                        formDataToSend.append('License', formData.drivingLicense);
                     }
                 }
 
