@@ -31,7 +31,11 @@ import {
   AlertCircle
 } from 'lucide-react';
 import MerchantDetailModal from '../components/MerchantDetailModal';
+import DSPDetailModal from '../components/DSPDetailModal';
+
 import { useUsers } from '../hooks/useUsers';
+import DeliveryPriceSection from '../components/DeliveryPriceSection';
+
 
 // Main App component
 export default function App() {
@@ -109,6 +113,8 @@ function AdminDashboard({ darkMode, setDarkMode }) {
         return <MerchantSection />;
       case 'dsp':
         return <DspSection />;
+      case 'delivery-prices':
+        return <DeliveryPriceSection />;
       case 'deliveries':
         return <DeliveriesSection />;
       case 'settings':
@@ -124,6 +130,7 @@ function AdminDashboard({ darkMode, setDarkMode }) {
     { id: 'users', label: 'Users', icon: Users },
     { id: 'merchants', label: 'Merchant', icon: Users },
     { id: 'dsp', label: 'DSP', icon: Users },
+    { id: 'delivery-prices', label: 'Delivery Prices', icon: Users },
     { id: 'deliveries', label: 'Deliveries', icon: Truck },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
@@ -711,13 +718,6 @@ function DeliveriesSection() {
 function MerchantSection() {
    
   const {  merchants} = useUsers();
-  const users = [
-    { id: 1, name: 'John Doe', email: 'john@example.com',  status: 'active', lastLogin: '2 hours ago' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com',  status: 'active', lastLogin: '1 day ago' },
-    { id: 3, name: 'Robert Johnson', email: 'robert@example.com',  status: 'pending', lastLogin: 'Never' },
-    { id: 4, name: 'Emily Davis', email: 'emily@example.com',  status: 'active', lastLogin: '30 minutes ago' },
-    { id: 5, name: 'Michael Wilson', email: 'michael@example.com',  status: 'suspended', lastLogin: '1 week ago' },
-  ];
 
    const [selectedMerchant, setSelectedMerchant] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -858,25 +858,36 @@ function MerchantSection() {
     </div>
   );
 }
+
 function DspSection() {
+   
+  const {  dsps} = useUsers();
   const users = [
-    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Customer', status: 'active', lastLogin: '2 hours ago' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'Merchant', status: 'active', lastLogin: '1 day ago' },
-    { id: 3, name: 'Robert Johnson', email: 'robert@example.com', role: 'DSP', status: 'pending', lastLogin: 'Never' },
-    { id: 4, name: 'Emily Davis', email: 'emily@example.com', role: 'Customer', status: 'active', lastLogin: '30 minutes ago' },
-    { id: 5, name: 'Michael Wilson', email: 'michael@example.com', role: 'Merchant', status: 'suspended', lastLogin: '1 week ago' },
+    { id: 1, name: 'John Doe', email: 'john@example.com',  status: 'active', lastLogin: '2 hours ago' },
+    { id: 2, name: 'Jane Smith', email: 'jane@example.com',  status: 'active', lastLogin: '1 day ago' },
+    { id: 3, name: 'Robert Johnson', email: 'robert@example.com',  status: 'pending', lastLogin: 'Never' },
+    { id: 4, name: 'Emily Davis', email: 'emily@example.com',  status: 'active', lastLogin: '30 minutes ago' },
+    { id: 5, name: 'Michael Wilson', email: 'michael@example.com',  status: 'suspended', lastLogin: '1 week ago' },
   ];
+
+   const [selectedDsp, setSelectedDsp] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = (dsp) => {
+    setSelectedDsp(dsp);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedDsp(null);
+  };
+
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h2>
-        <div className="flex space-x-3">
-          <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </button>
-        </div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">DSP Management</h2>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -887,7 +898,7 @@ function DspSection() {
             </div>
             <input
               type="text"
-              placeholder="Search users..."
+              placeholder="Search Merchants..."
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition duration-150"
             />
           </div>
@@ -895,7 +906,7 @@ function DspSection() {
             <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">Status:</span>
             <select className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-white dark:bg-gray-700">
               <option>All</option>
-              <option>Active</option>
+              <option>Approved</option>
               <option>Pending</option>
               <option>Suspended</option>
             </select>
@@ -910,16 +921,14 @@ function DspSection() {
                   Name
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Vehicle Details
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Email
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Role
-                </th>
+
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Status
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Last Login
                 </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Actions
@@ -927,8 +936,8 @@ function DspSection() {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+              {dsps.map((user) => (
+                <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300">
@@ -939,31 +948,29 @@ function DspSection() {
                       </div>
                     </div>
                   </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300">
+                        {user.DspDetails?.vehicleDetails.charAt(0)}
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">{user.DspDetails?.vehicleDetails}</div>
+                      </div>
+                    </div>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      user.role === 'Customer' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' :
-                      user.role === 'Merchant' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400' :
-                      'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
-                    }`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      user.status === 'active' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400' :
-                      user.status === 'pending' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400' :
+                      user.DspDetails?.approvalStatus === 'approved' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400' :
+                      user.DspDetails?.approvalStatus === 'pending' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400' :
                       'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
                     }`}>
-                      {user.status}
+                      {user.DspDetails?.approvalStatus}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.lastLogin}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 mr-3">
-                      Edit
-                    </button>
-                    <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
+                     <button onClick={() => openModal(user)}>View Details</button>
+                     <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
                       Delete
                     </button>
                   </td>
@@ -971,6 +978,12 @@ function DspSection() {
               ))}
             </tbody>
           </table>
+          <DSPDetailModal
+           merchant={selectedDsp} 
+           isOpen={isModalOpen} 
+           onClose={closeModal} 
+
+          />
         </div>
 
         <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">

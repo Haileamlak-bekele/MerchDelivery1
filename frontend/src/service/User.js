@@ -20,6 +20,12 @@ export const fetchMerchants = async () => {
   return response.data;
 };
 
+export const fetchDSP = async () => {
+  const response = await api.get('/admin/dsp');
+  console.log(response.data);
+  return response.data;
+};
+
 export const updateMerchantStatus = async (id, status) => {
   const approvalStatus = status;
   const response = await api.put(`/admin/approve/${id}`, approvalStatus);

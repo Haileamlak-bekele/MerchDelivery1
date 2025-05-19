@@ -1,6 +1,6 @@
 const User = require("../src/config/model/Users.model.js");
 const Merchant = require("../src/config/model/Merchant.model.js");
-const Dsp = require("../src/config/model/DSP.model.js");
+const DSP = require("../src/config/model/DSP.model.js");
 const DeliveryPriceSettings = require("../src/config/model/DeliveryPricesetting.model.js");
 
 // @desc Get all users
@@ -48,6 +48,29 @@ const getAllMerchants = async (req, res) => {
   }
 };
 
+const getAllDSPs = async (req, res) => {
+  try {
+    // Find all users with merchant role
+    const DspUsers = await User.find({ role: 'dsp' }).select('-password');
+    
+    // Get merchant details for each user
+    const Dsp = await Promise.all(
+      DspUsers.map(async (user) => {
+        const DspDetails = await DSP.findOne({ userId: user._id });
+        return {
+          ...user.toObject(),
+          DspDetails
+        };
+      })
+    );
+
+    res.json(Dsp);
+  } catch (error) {
+    console.error('Error fetching Dsp:', error);
+    res.status(500).json({ message: 'Error fetching Dsp', error });
+  }
+};
+
 const setDeliveryPricing = async (req, res) => {
   const { basePrice, perKmRate, perKgRate } = req.body;
   const adminId = req.user.id;
@@ -78,6 +101,13 @@ const setDeliveryPricing = async (req, res) => {
 
   res.json({ message: "Delivery pricing updated", deliverySettings: settings });
 };
+
+const getDeliveryPricing = async (req, res) => {
+  const settings = await DeliveryPriceSettings.findOne();
+  if (!settings) return res.status(404).json({ message: 'Delivery pricing settings not found' });
+
+  res.json(settings);
+}
 
 // @desc Get platform stats
 const getPlatformStats = async (req, res) => {
@@ -160,13 +190,13 @@ const updateUserStatus = async (req, res) => {
     return res.json({ message: `Merchant approval status updated to ${status}`, merchant });
   } else if (user.role === "dsp") {
     // Update the approvalStatus in the DSP table
-    const dsp = await Dsp.findOne({ userId: id });
+    const dsp = await DSP.findOne({ userId: id });
     if (!dsp) return res.status(404).json({ message: "DSP not found" });
 
-    dsp.approvalStatus = approvalStatus;
+    dsp.approvalStatus = status;
     await dsp.save();
 
-    return res.json({ message: `DSP approval status updated to ${satisfiestatus}`, dsp });
+    return res.json({ message: `DSP approval status updated `, dsp });
   } else {
     return res.status(400).json({ message: "Can only update status of merchant or dsp" });
   }
@@ -178,7 +208,9 @@ module.exports = {
   getAllUsers,
   getUserById,
   deleteUser,
+  getDeliveryPricing,
   getAllMerchants,
+  getAllDSPs ,
   getPlatformStats,
   updateUserStatus,
   setDeliveryPricing,
