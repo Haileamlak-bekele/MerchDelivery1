@@ -8,7 +8,6 @@ const getAllUsers = async (req, res) => {
   const users = await User.find().select("-password");
   res.json(users);
 };
-
 // @desc Get user by ID
  const getUserById = async (req, res) => {
   const user = await User.findById(req.params.id).select("-password");
@@ -23,6 +22,30 @@ const getAllUsers = async (req, res) => {
 
   await user.deleteOne();
   res.json({ message: "User deleted" });
+};
+
+// @desc Get all merchants with their details
+const getAllMerchants = async (req, res) => {
+  try {
+    // Find all users with merchant role
+    const merchantUsers = await User.find({ role: 'merchant' }).select('-password');
+    
+    // Get merchant details for each user
+    const merchants = await Promise.all(
+      merchantUsers.map(async (user) => {
+        const merchantDetails = await Merchant.findOne({ userId: user._id });
+        return {
+          ...user.toObject(),
+          merchantDetails
+        };
+      })
+    );
+
+    res.json(merchants);
+  } catch (error) {
+    console.error('Error fetching merchants:', error);
+    res.status(500).json({ message: 'Error fetching merchants', error });
+  }
 };
 
 const setDeliveryPricing = async (req, res) => {
@@ -113,10 +136,10 @@ const getPlatformStats = async (req, res) => {
 // @desc Admin updates approval status (approve/reject merchant/DSP)
 const updateUserStatus = async (req, res) => {
   const { id } = req.params; // User ID
-  const { approvalStatus } = req.body; // New approval status
+  const { status } = req.body; // New approval status
 
   // Validate the approvalStatus value
-  if (!["approved", "rejected", "pending"].includes(approvalStatus)) {
+  if (!["approved", "rejected", "pending"].includes(status)) {
     return res.status(400).json({ message: "Invalid approval status value" });
   }
 
@@ -131,10 +154,10 @@ const updateUserStatus = async (req, res) => {
     const merchant = await Merchant.findOne({ userId: id });
     if (!merchant) return res.status(404).json({ message: "Merchant not found" });
 
-    merchant.approvalStatus = approvalStatus;
+    merchant.approvalStatus = status;
     await merchant.save();
 
-    return res.json({ message: `Merchant approval status updated to ${approvalStatus}`, merchant });
+    return res.json({ message: `Merchant approval status updated to ${status}`, merchant });
   } else if (user.role === "dsp") {
     // Update the approvalStatus in the DSP table
     const dsp = await Dsp.findOne({ userId: id });
@@ -143,7 +166,7 @@ const updateUserStatus = async (req, res) => {
     dsp.approvalStatus = approvalStatus;
     await dsp.save();
 
-    return res.json({ message: `DSP approval status updated to ${approvalStatus}`, dsp });
+    return res.json({ message: `DSP approval status updated to ${satisfiestatus}`, dsp });
   } else {
     return res.status(400).json({ message: "Can only update status of merchant or dsp" });
   }
@@ -155,6 +178,7 @@ module.exports = {
   getAllUsers,
   getUserById,
   deleteUser,
+  getAllMerchants,
   getPlatformStats,
   updateUserStatus,
   setDeliveryPricing,

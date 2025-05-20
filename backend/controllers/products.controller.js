@@ -87,11 +87,26 @@ const updateProduct = async (req, res) => {
 // Delete product
 const deleteProduct = async (req, res) => {
   const { id } = req.params;
-  const product = await Product.findOneAndDelete({ _id: id, merchantId: req.merchant._id });
+  const product = await Product.findOne({ _id: id, merchantId: req.merchant._id });
 
   if (!product) return res.status(404).json({ message: "Product not found" });
 
-  res.json({ message: "Product deleted" });
+  // Delete the product image if it exists
+  if (product.image) {
+    const imagePath = path.join(__dirname, '..', product.image);
+    fs.unlink(imagePath, (err) => {
+      if (err) {
+        console.error('Failed to delete product image:', err.message);
+      } else {
+        console.log('Product image deleted:', imagePath);
+      }
+    });
+  }
+
+  // Delete the product from the database
+  await Product.deleteOne({ _id: id, merchantId: req.merchant._id });
+
+  res.json({ message: "Product deleted successfully" });
 };
 
 module.exports = {

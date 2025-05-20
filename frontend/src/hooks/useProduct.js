@@ -63,6 +63,14 @@ export const useProduct = () => {
   // CRUD operations
   const handleAddProduct = async (formData) => {
     try {
+      console.log('Form data being sent:', {
+        name: formData.name,
+        description: formData.description,
+        price: formData.price,
+        stock_quantity: formData.stock,
+        category: formData.category,
+        hasImage: !!formData.imageFile
+      });
       await createProduct(formData);
       await fetchAndSetProducts(); // Fetch latest after add
       setIsModalOpen(false);
@@ -86,9 +94,12 @@ export const useProduct = () => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         await deleteProduct(id);
-        setProducts(prev => prev.filter(p => p.id !== id));
+        setProducts(prevProducts => prevProducts.filter(p => p._id !== id));
+        setFilteredProducts(prevFiltered => prevFiltered.filter(p => p._id !== id));
+        setError(null);
       } catch (err) {
         setError('Failed to delete product. Please try again.');
+        console.error('Delete error:', err);
       }
     }
   };

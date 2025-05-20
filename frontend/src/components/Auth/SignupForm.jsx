@@ -4,7 +4,7 @@ import PasswordField from './PasswordField';
 import FileInputField from './FileInputField';
 import { ROLES } from '../../constants.js'; // Ensure this path is correct and add .js
 import { User, Mail, Phone as PhoneIcon, Briefcase, MapPin, Truck, FileText, UserPlus } from 'lucide-react';
-
+import MapPicker from '../MapModal.jsx'; // Ensure this path is correct
 const SignupForm = ({
     formData,
     errors,
@@ -102,35 +102,35 @@ const SignupForm = ({
             </fieldset>
 
             {selectedRole === ROLES.MERCHANT && (
-                <div className="pt-4 mt-2 p-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700/30 animate-fade-in space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Merchant Details</h3>
-                    <FormField
-                        name="businessName"
-                        type="text"
-                        placeholder="Business Name"
-                        Icon={Briefcase}
-                        value={formData.businessName}
-                        onChange={handleInputChange}
-                        error={errors.businessName}
-                    />
-                    <FileInputField
-                        name="documentation"
-                        label="Upload Documentation"
-                        Icon={FileText}
-                        onChange={handleInputChange}
-                        file={formData.documentation}
-                        error={errors.documentation}
-                    />
-                    <FormField
-                        name="locationLink"
-                        type="url"
-                        placeholder="Google Maps Location Link"
-                        Icon={MapPin}
-                        value={formData.locationLink}
-                        onChange={handleInputChange}
-                        error={errors.locationLink}
-                    />
-                </div>
+    <div className="pt-4 mt-2 p-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700/30 animate-fade-in space-y-4">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Merchant Details</h3>
+        <FormField
+            name="businessName"
+            type="text"
+            placeholder="Business Name"
+            Icon={Briefcase}
+            value={formData.businessName}
+            onChange={handleInputChange}
+            error={errors.businessName}
+        />
+        <FileInputField
+            name="documentation"
+            label="Upload Documentation"
+            Icon={FileText}
+             onChange={handleInputChange}
+            file={formData.documentation}
+            error={errors.documentation}
+        />
+        {/* Replace locationLink with MapPicker */}
+        <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pick Business Location</label>
+            <MapPicker
+                value={formData.location}
+                onChange={loc => handleInputChange({ target: { name: 'location', value: loc } })}
+            />
+            {errors.location && <p className="text-xs text-red-600 dark:text-red-500">{errors.location}</p>}
+        </div>
+    </div>
             )}
 
             {selectedRole === ROLES.DSP && (

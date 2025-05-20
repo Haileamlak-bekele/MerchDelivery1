@@ -30,6 +30,8 @@ import {
   Activity,
   AlertCircle
 } from 'lucide-react';
+import MerchantDetailModal from '../components/MerchantDetailModal';
+import { useUsers } from '../hooks/useUsers';
 
 // Main App component
 export default function App() {
@@ -103,6 +105,10 @@ function AdminDashboard({ darkMode, setDarkMode }) {
         return <OverviewSection deliveryData={deliveryData} userGrowthData={userGrowthData} pieData={pieData} />;
       case 'users':
         return <UsersSection />;
+      case 'merchants':
+        return <MerchantSection />;
+      case 'dsp':
+        return <DspSection />;
       case 'deliveries':
         return <DeliveriesSection />;
       case 'settings':
@@ -116,6 +122,8 @@ function AdminDashboard({ darkMode, setDarkMode }) {
   const navItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'users', label: 'Users', icon: Users },
+    { id: 'merchants', label: 'Merchant', icon: Users },
+    { id: 'dsp', label: 'DSP', icon: Users },
     { id: 'deliveries', label: 'Deliveries', icon: Truck },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
@@ -695,6 +703,295 @@ function DeliveriesSection() {
             ))}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+function MerchantSection() {
+   
+  const {  merchants} = useUsers();
+  const users = [
+    { id: 1, name: 'John Doe', email: 'john@example.com',  status: 'active', lastLogin: '2 hours ago' },
+    { id: 2, name: 'Jane Smith', email: 'jane@example.com',  status: 'active', lastLogin: '1 day ago' },
+    { id: 3, name: 'Robert Johnson', email: 'robert@example.com',  status: 'pending', lastLogin: 'Never' },
+    { id: 4, name: 'Emily Davis', email: 'emily@example.com',  status: 'active', lastLogin: '30 minutes ago' },
+    { id: 5, name: 'Michael Wilson', email: 'michael@example.com',  status: 'suspended', lastLogin: '1 week ago' },
+  ];
+
+   const [selectedMerchant, setSelectedMerchant] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = (merchant) => {
+    setSelectedMerchant(merchant);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedMerchant(null);
+  };
+
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Merchant Management</h2>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <div className="relative w-full max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search Merchants..."
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition duration-150"
+            />
+          </div>
+          <div className="ml-4 flex items-center">
+            <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">Status:</span>
+            <select className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-white dark:bg-gray-700">
+              <option>All</option>
+              <option>Approved</option>
+              <option>Pending</option>
+              <option>Suspended</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Name
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Buisness Name
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Email
+                </th>
+
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Status
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              {merchants.map((user) => (
+                <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300">
+                        {user.name.charAt(0)}
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</div>
+                      </div>
+                    </div>
+                  </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300">
+                        {user.merchantDetails?.storeName.charAt(0)}
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">{user.merchantDetails?.storeName}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      user.merchantDetails?.approvalStatus === 'approved' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400' :
+                      user.merchantDetails?.approvalStatus === 'pending' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400' :
+                      'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+                    }`}>
+                      {user.merchantDetails?.approvalStatus}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                     <button onClick={() => openModal(user)}>View Details</button>
+                     <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <MerchantDetailModal 
+           merchant={selectedMerchant} 
+           isOpen={isModalOpen} 
+           onClose={closeModal} 
+
+          />
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Showing <span className="font-medium">1</span> to <span className="font-medium">5</span> of <span className="font-medium">24</span> results
+          </div>
+          <div className="flex space-x-2">
+            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+              Previous
+            </button>
+            <button className="px-3 py-1 border border-emerald-500 bg-emerald-500 text-white rounded-md hover:bg-emerald-600">
+              1
+            </button>
+            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+              2
+            </button>
+            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+function DspSection() {
+  const users = [
+    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Customer', status: 'active', lastLogin: '2 hours ago' },
+    { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'Merchant', status: 'active', lastLogin: '1 day ago' },
+    { id: 3, name: 'Robert Johnson', email: 'robert@example.com', role: 'DSP', status: 'pending', lastLogin: 'Never' },
+    { id: 4, name: 'Emily Davis', email: 'emily@example.com', role: 'Customer', status: 'active', lastLogin: '30 minutes ago' },
+    { id: 5, name: 'Michael Wilson', email: 'michael@example.com', role: 'Merchant', status: 'suspended', lastLogin: '1 week ago' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h2>
+        <div className="flex space-x-3">
+          <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center">
+            <Filter className="h-4 w-4 mr-2" />
+            Filter
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <div className="relative w-full max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search users..."
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition duration-150"
+            />
+          </div>
+          <div className="ml-4 flex items-center">
+            <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">Status:</span>
+            <select className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-white dark:bg-gray-700">
+              <option>All</option>
+              <option>Active</option>
+              <option>Pending</option>
+              <option>Suspended</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Name
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Email
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Role
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Status
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Last Login
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              {users.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300">
+                        {user.name.charAt(0)}
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      user.role === 'Customer' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' :
+                      user.role === 'Merchant' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400' :
+                      'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                    }`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      user.status === 'active' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400' :
+                      user.status === 'pending' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400' :
+                      'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+                    }`}>
+                      {user.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.lastLogin}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 mr-3">
+                      Edit
+                    </button>
+                    <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Showing <span className="font-medium">1</span> to <span className="font-medium">5</span> of <span className="font-medium">24</span> results
+          </div>
+          <div className="flex space-x-2">
+            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+              Previous
+            </button>
+            <button className="px-3 py-1 border border-emerald-500 bg-emerald-500 text-white rounded-md hover:bg-emerald-600">
+              1
+            </button>
+            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+              2
+            </button>
+            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+              Next
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

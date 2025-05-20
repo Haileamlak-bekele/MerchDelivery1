@@ -1,138 +1,223 @@
-// screens/HomeScreen.js
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import LocationTracker from '../components/locationTracker';
-import { MaterialIcons, FontAwesome5, Entypo } from '@expo/vector-icons';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-const HomeScreen = ({ navigation }) => {
-  const [isTracking, setIsTracking] = useState(true);
+const DSPDashboard = () => {
+  const navigation = useNavigation();
 
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem('token');
-    navigation.replace('Login');
+  const [activeDelivery, setActiveDelivery] = useState(null);
+  const [incomingDelivery, setIncomingDelivery] = useState({
+    items: '2 Pizzas, 1 Soda',
+    pickup: 'Restaurant A, 123 Main St',
+    dropoff: 'Customer X, 456 Oak Ave',
+    price: '$8.50',
+    distance: '2.5 km',
+  });
+
+  const handleAccept = () => {
+    setActiveDelivery(incomingDelivery);
+    setIncomingDelivery(null);
   };
 
-  const toggleTracking = () => {
-    setIsTracking(prev => !prev);
-    // You could also add logic to start/stop location updates here
+  const handleReject = () => {
+    setIncomingDelivery(null);
   };
+   const handleNavigate = () => {
+    navigation.navigate('MapScreen');
+   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {isTracking && <LocationTracker />}
-
+    <View style={styles.container}>
       {/* Header */}
-      <View style={styles.headerContainer}>
-      <Image
-          source={{ uri: 'https://via.placeholder.com/100' }}
-          style={styles.avatar}
-        />
-        <Text style={styles.title}>Welcome, DSP 👋</Text>
-      </View>
-
-      {/* Location Tracking Card */}
-      <TouchableOpacity style={styles.cardSquare} activeOpacity={0.8} onPress={toggleTracking}>
-        <MaterialIcons name="location-on" size={40} color="#4caf50" />
-        <Text style={styles.cardTitle}>Location Tracking</Text>
-        <Text style={styles.cardText}>
-          {isTracking ? 'Your location is currently active.' : 'Location tracking is stopped.'}
-        </Text>
-        <View style={styles.button}>
-          <Text style={styles.buttonText}>{isTracking ? 'Stop Tracking' : 'Start Tracking'}</Text>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>🚚 DSP Dashboard</Text>
+        <View style={styles.profileIcon}>
+          <Text style={styles.profileText}>👤</Text>
         </View>
-      </TouchableOpacity>
-
-      {/* Delivery Tasks Card */}
-      <TouchableOpacity style={styles.cardSquare} activeOpacity={0.8}>
-        <FontAwesome5 name="truck" size={40} color="#2196f3" />
-        <Text style={styles.cardTitle}>My Deliveries</Text>
-        <Text style={styles.cardText}>- Order #12345 - 2.3 km away</Text>
-        <Text style={styles.cardText}>- Order #12346 - 5.1 km away</Text>
-        <View style={styles.button}><Text style={styles.buttonText}>View All Deliveries</Text></View>
-      </TouchableOpacity>
-
-      {/* Earnings Card */}
-      <View style={styles.cardSquare}>
-        <Entypo name="credit" size={40} color="#ff9800" />
-        <Text style={styles.cardTitle}>Today’s Earnings</Text>
-        <Text style={styles.cardText}>Total: 350 ETB</Text>
       </View>
 
-      {/* Logout Button */}
-      <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={handleLogout}>
-        <Text style={styles.buttonText}>Logout</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      <ScrollView contentContainerStyle={styles.content}>
+        {/* Active Delivery Section */}
+        <Text style={styles.sectionTitle}>Active Delivery</Text>
+        {activeDelivery ? (
+          <View style={styles.deliveryCard}>
+            <Text style={styles.itemTitle}>
+              <Text style={styles.link}>{activeDelivery.items}</Text>
+            </Text>
+            <Text style={styles.info}><Text style={styles.bold}>Pickup:</Text> {activeDelivery.pickup}</Text>
+            <Text style={styles.info}><Text style={styles.bold}>Dropoff:</Text> {activeDelivery.dropoff}</Text>
+
+            <View style={styles.deliveryFooter}>
+              <View>
+                <Text style={styles.price}>{activeDelivery.price}</Text>
+                <Text style={styles.distance}>{activeDelivery.distance}</Text>
+              </View>
+            </View>
+
+            <View style={styles.actionButtons}>
+              <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('MapScreen')}>
+                <Text style={styles.buttonText}>🧭 Navigate</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.chatButton} onPress={() => console.log('Chat with Customer')}>
+                <Text style={styles.buttonText}>💬 Chat</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.confirmButton} onPress={() => console.log('Pickup Confirmed')}>
+                <Text style={styles.buttonText}>✔ Confirm Pickup</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.noDeliveryCard}>
+            <Text style={styles.noDeliveryIcon}>📦</Text>
+            <Text style={styles.noDeliveryTitle}>No Active Delivery</Text>
+            <Text style={styles.noDeliverySubtitle}>Waiting for your next assignment.</Text>
+          </View>
+        )}
+
+        {/* Incoming Delivery Section */}
+        {incomingDelivery && (
+          <>
+            <Text style={styles.sectionTitle}>Incoming Deliveries</Text>
+            <View style={styles.deliveryCard}>
+              <Text style={styles.itemTitle}>
+                <Text style={styles.link}>{incomingDelivery.items}</Text>
+              </Text>
+              <Text style={styles.info}><Text style={styles.bold}>Pickup:</Text> {incomingDelivery.pickup}</Text>
+              <Text style={styles.info}><Text style={styles.bold}>Dropoff:</Text> {incomingDelivery.dropoff}</Text>
+
+              <View style={styles.deliveryFooter}>
+                <View>
+                  <Text style={styles.price}>{incomingDelivery.price}</Text>
+                  <Text style={styles.distance}>{incomingDelivery.distance}</Text>
+                </View>
+
+                <View style={styles.buttons}>
+                  <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
+                    <Text style={styles.buttonText}>✓ Accept</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.rejectButton} onPress={handleReject}>
+                    <Text style={styles.buttonText}>✕ Reject</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </>
+        )}
+      </ScrollView>
+    </View>
   );
 };
 
-export default HomeScreen;
+export default DSPDashboard;
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-    backgroundColor: '#f2f2f2',
-    flexGrow: 1,
+  container: { flex: 1, backgroundColor: '#f6f9fc' },
+
+  header: {
+    backgroundColor: '#0080d6',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  headerContainer: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  cardSquare: {
-    width: 300,
-    height: 300,
-    backgroundColor: '#ffffff',
-    padding: 20,
-    borderRadius: 20,
-    marginBottom: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginVertical: 10,
-    color: '#333',
-    textAlign: 'center',
-  },
-  cardText: {
-    fontSize: 16,
-    color: '#555',
-    textAlign: 'center',
-    marginVertical: 2,
-  },
-  button: {
-    marginTop: 15,
-    backgroundColor: '#2196f3',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+  headerText: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
+  profileIcon: {
+    backgroundColor: '#4cd137',
     borderRadius: 10,
+    padding: 8,
   },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    textAlign: 'center',
+  profileText: { fontSize: 18, color: '#fff' },
+
+  content: { padding: 16 },
+
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 8 },
+
+  noDeliveryCard: {
+    backgroundColor: '#fff',
+    padding: 24,
+    alignItems: 'center',
+    borderRadius: 12,
+    marginBottom: 20,
   },
-  logoutButton: {
-    backgroundColor: '#e53935',
+  noDeliveryIcon: { fontSize: 36, color: '#95a5a6' },
+  noDeliveryTitle: { fontSize: 18, fontWeight: 'bold', marginTop: 8 },
+  noDeliverySubtitle: { fontSize: 14, color: '#7f8c8d' },
+
+  deliveryCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+  },
+  itemTitle: { fontSize: 16, color: '#2980b9', marginBottom: 6 },
+  link: { color: '#2980b9', textDecorationLine: 'underline' },
+  info: { fontSize: 14, marginBottom: 4 },
+  bold: { fontWeight: 'bold' },
+
+  deliveryFooter: {
+    marginTop: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  price: { fontSize: 18, fontWeight: 'bold', color: 'green' },
+  distance: { fontSize: 14, color: '#7f8c8d' },
+
+  buttons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  acceptButton: {
+    backgroundColor: '#2ecc71',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  rejectButton: {
+    backgroundColor: '#e74c3c',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  buttonText: { color: '#fff', fontWeight: 'bold' },
+
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+
+  navButton: {
+    backgroundColor: '#2980b9',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: 'center',
+  },
+
+  chatButton: {
+    backgroundColor: '#9b59b6',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: 'center',
+  },
+
+  confirmButton: {
+    backgroundColor: '#f39c12',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: 'center',
   },
 });

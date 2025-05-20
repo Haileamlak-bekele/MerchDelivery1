@@ -6,8 +6,12 @@ import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
 import CustomerInterface from './pages/CustomerInterface';
 import LiveDeliveryTracking from './pages/LiveDeliveryTracking';
+import RegistrationSuccess from './pages/RegistrationSuccess';
 import { Sun, Moon } from 'lucide-react';
 import MerchantInventoryPage from './pages/MerchantInventoryPage';
+import AdminPage from './pages/AdminDashboard';
+import CartPage from './pages/CartPage';
+import OrderPage from './components/checkout'
 
 function AuthWrapper({ role }) {
   // Redirect based on role
@@ -18,6 +22,8 @@ function AuthWrapper({ role }) {
       return <Navigate to="/merchant" />;
     case 'dsp':
       return <Navigate to="/dsp" />;
+         case 'admin':
+      return <Navigate to="/admin"/>;
     default:
       return <Navigate to="/login" />;
   }
@@ -71,6 +77,10 @@ export default function AppRouter() {
           <Route path="/customer" element={<CustomerInterface />} />
           <Route path="/merchant" element={<MerchantInventoryPage />} />
           <Route path="/dsp" element={<LiveDeliveryTracking />} />
+          <Route path ="/admin" element={<AdminPage/>}/>
+          <Route path="/registration-success" element={<RegistrationSuccess />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/order" element={<OrderPage />} />
           <Route path="/redirect" element={<AuthWrapper role={localStorage.getItem('userRole')} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

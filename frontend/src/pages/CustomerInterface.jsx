@@ -1,18 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Star, Heart, X, MessageSquare, Filter, ChevronDown, ChevronUp, ShoppingCart, Search, Trash2, User, Settings, LogOut, Package, Info, Phone, Sun, Moon } from 'lucide-react';
-
-// --- Mock Data (Unchanged) ---
-const mockProducts = [
-  { id: 1, name: 'Wireless Noise-Cancelling Headphones', category: 'Electronics', color: 'Black', price: 199.99, rating: 4.5, imageUrl: 'https://placehold.co/300x300/000000/FFFFFF?text=Headphones', description: 'Immersive sound experience with active noise cancellation. Long battery life and comfortable design.', isFrequentlyBought: true },
-  { id: 2, name: 'Smartphone Pro', category: 'Electronics', color: 'Silver', price: 799.00, rating: 4.8, imageUrl: 'https://placehold.co/300x300/C0C0C0/000000?text=Smartphone', description: 'Latest generation smartphone with a stunning display, powerful processor, and advanced camera system.', isFrequentlyBought: true },
-  { id: 3, name: 'Classic Cotton T-Shirt', category: 'Clothing', color: 'White', price: 24.99, rating: 4.2, imageUrl: 'https://placehold.co/300x300/FFFFFF/000000?text=T-Shirt', description: 'A comfortable and versatile t-shirt made from 100% premium cotton. Perfect for everyday wear.', isFrequentlyBought: true },
-  { id: 4, name: 'Running Shoes', category: 'Shoes', color: 'Blue', price: 89.95, rating: 4.6, imageUrl: 'https://placehold.co/300x300/0000FF/FFFFFF?text=Shoes', description: 'Lightweight and breathable running shoes designed for maximum comfort and performance.', isFrequentlyBought: false },
-  { id: 5, name: 'Bluetooth Speaker', category: 'Electronics', color: 'Gray', price: 49.99, rating: 4.3, imageUrl: 'https://placehold.co/300x300/808080/FFFFFF?text=Speaker', description: 'Portable speaker with rich sound and long playtime. Water-resistant design.', isFrequentlyBought: false },
-  { id: 6, name: 'Denim Jeans', category: 'Clothing', color: 'Blue', price: 59.99, rating: 4.0, imageUrl: 'https://placehold.co/300x300/0000FF/FFFFFF?text=Jeans', description: 'Stylish and durable denim jeans with a classic fit.', isFrequentlyBought: false },
-  { id: 7, name: 'Leather Loafers', category: 'Shoes', color: 'Black', price: 120.00, rating: 4.7, imageUrl: 'https://placehold.co/300x300/000000/FFFFFF?text=Loafers', description: 'Elegant leather loafers suitable for both casual and formal occasions.', isFrequentlyBought: false },
-  { id: 8, name: 'Laptop Ultrabook', category: 'Electronics', color: 'Silver', price: 1199.00, rating: 4.9, imageUrl: 'https://placehold.co/300x300/C0C0C0/000000?text=Laptop', description: 'Thin and light ultrabook with high performance for productivity on the go.', isFrequentlyBought: true },
-  { id: 9, name: 'Hooded Sweatshirt', category: 'Clothing', color: 'Gray', price: 45.00, rating: 4.4, imageUrl: 'https://placehold.co/300x300/808080/FFFFFF?text=Hoodie', description: 'Warm and cozy hooded sweatshirt, perfect for cooler weather.', isFrequentlyBought: false },
-];
+import { useCustomerShop } from '../hooks/useCustomerShop';
+import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../config';
 
 // --- Constants ---
 const TAX_RATE = 0.15; // 15% Tax Rate
@@ -28,19 +18,52 @@ const renderRatingStars = (rating) => {
   const stars = [];
   const fullStars = Math.floor(rating);
   for (let i = 0; i < fullStars; i++) {
-    // Use dark mode compatible star colors
     stars.push(<Star key={`full-${i}`} className="w-4 h-4 text-yellow-400 dark:text-yellow-500 fill-current" />);
   }
   for (let i = 0; i < 5 - fullStars; i++) {
-    // Use dark mode compatible empty star colors
     stars.push(<Star key={`empty-${i}`} className="w-4 h-4 text-gray-300 dark:text-gray-600" />);
   }
   return <div className="flex items-center">{stars}</div>;
 };
 
+function getImageUrl(imagePath, baseUrl = API_BASE_URL) {
+  console.log('Original image path:', imagePath);
+  console.log('Base URL:', baseUrl);
+  
+  if (!imagePath) {
+    console.log('No image path provided, using placeholder');
+    return 'https://placehold.co/300x192/f3f4f6/9ca3af?text=N/A';
+  }
+  
+  // If it's already a full URL, return it
+  if (imagePath.startsWith('http')) {
+    console.log('Full URL detected:', imagePath);
+    return imagePath;
+  }
+  
+  // If it's a relative path starting with /uploads, just prepend the base URL
+  if (imagePath.startsWith('/uploads')) {
+    const finalUrl = `${baseUrl}${imagePath}`;
+    console.log('Relative path with /uploads:', finalUrl);
+    return finalUrl;
+  }
+  
+  // For other cases, normalize the path
+  let normalizedPath = imagePath
+    .replace(/\\/g, '/')
+    .replace(/\/+/g, '/')
+    .replace(/^[/.]+/, '')
+    .replace(/^uploads/, '/uploads')
+    .replace(/^\/?/, '/');
+    
+  const finalUrl = `${baseUrl}${normalizedPath}`;
+  console.log('Normalized path:', normalizedPath);
+  console.log('Final URL:', finalUrl);
+  return finalUrl;
+}
+
 // --- Main App Component ---
 export default function App() {
-    // Apply theme class to html element on initial load
     useEffect(() => {
         const savedTheme = localStorage.getItem('theme');
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -55,16 +78,28 @@ export default function App() {
 
 // --- Customers Page Component ---
 export function CustomersPage() {
+  // Integrate backend hook
+  const {
+    products,
+    cart,
+    loading,
+    error,
+    addToCart,
+    placeOrder,
+    fetchCart,
+    fetchProducts,
+    setError,
+    deleteCartItem
+  } = useCustomerShop();
+
   // State declarations
-  const [products] = useState(mockProducts);
-  const [filteredProducts, setFilteredProducts] = useState(mockProducts);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [activeFilters, setActiveFilters] = useState({ category: '', color: '' });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [savedItems, setSavedItems] = useState(new Set());
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false); // State for user menu popover
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'system'); // 'light', 'dark', 'system'
@@ -92,33 +127,26 @@ export function CustomersPage() {
   useEffect(() => {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const handleChange = () => {
-          if (theme === 'system') { // Only update if theme is set to 'system'
+          if (theme === 'system') {
               const isSystemDark = mediaQuery.matches;
               document.documentElement.classList.remove(isSystemDark ? 'light' : 'dark');
               document.documentElement.classList.add(isSystemDark ? 'dark' : 'light');
           }
       };
-
       mediaQuery.addEventListener('change', handleChange);
       return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]); // Rerun if theme setting changes
-
+  }, [theme]);
 
   // Effect for filtering products
-  // This effect now correctly applies filters sequentially
   useEffect(() => {
-    let tempProducts = [...products]; // Start with all products
-
-    // Apply category filter first
+    let tempProducts = [...products];
     if (activeFilters.category) {
       tempProducts = tempProducts.filter(p => p.category === activeFilters.category);
     }
-    // Apply color filter to the result of category filter
     if (activeFilters.color) {
       tempProducts = tempProducts.filter(p => p.color === activeFilters.color);
     }
-    // Apply search term filter to the result of previous filters
-    if (searchTerm.trim()) { // Check if searchTerm is not just whitespace
+    if (searchTerm.trim()) {
       const lowerCaseSearchTerm = searchTerm.toLowerCase().trim();
       tempProducts = tempProducts.filter(p =>
         p.name.toLowerCase().includes(lowerCaseSearchTerm) ||
@@ -127,7 +155,7 @@ export function CustomersPage() {
       );
     }
     setFilteredProducts(tempProducts);
-  }, [activeFilters, products, searchTerm]); // Dependencies: filters, products, search term
+  }, [activeFilters, products, searchTerm]);
 
   // --- Event Handlers ---
 
@@ -165,36 +193,36 @@ export function CustomersPage() {
     });
   };
 
-  const handleAddToCart = useCallback((productToAdd) => { // useCallback for stability if passed deep
-    setCartItems(prevCartItems => {
-      const existingItem = prevCartItems.find(item => item.id === productToAdd.id);
-      if (existingItem) {
-        return prevCartItems.map(item =>
-          item.id === productToAdd.id ? { ...item, quantity: item.quantity + 1 } : item
-        );
-      } else {
-        return [...prevCartItems, { ...productToAdd, quantity: 1 }];
-      }
-    });
-    setIsCartOpen(true); // Open cart when item is added
-    setTimeout(() => setIsCartOpen(false), 2500); // Auto-close cart
-  }, []); // No dependencies needed if it only uses productToAdd and setCartItems
+  // --- INTEGRATION: Add to Cart ---
+  const handleAddToCart = useCallback((productToAdd) => {
+    console.log('Adding to cart:', productToAdd);
+    // Log the full products array for debugging
+    console.log('All products:', products.map(p => ({_id: p._id, id: p.id, name: p.name})));
+    // Find the real product (with _id) from products
+    const backendProduct = products.find(p => p._id === productToAdd._id);
+    if (!backendProduct) {
+      console.error('No matching product found in products array for:', productToAdd);
+      return;
+    }
+    console.log('Matched product:', backendProduct);
+    // Use backend _id if available, else fallback to id
+    const idToAdd = backendProduct._id || backendProduct.id;
+    addToCart(idToAdd, 1);
+    console.log('Added to cart (id):', idToAdd);
+    setIsCartOpen(true);
+    setTimeout(() => setIsCartOpen(false), 2500);
+  }, [addToCart, products]);
 
-  const handleRemoveFromCart = (productIdToRemove) => {
-    setCartItems(prevCartItems => prevCartItems.filter(item => item.id !== productIdToRemove));
-  };
+  // --- INTEGRATION: Remove from Cart ---
+  const handleRemoveFromCart = useCallback((cartItemId) => {
+    console.log('Attempting to remove cart item:', cartItemId);
+    deleteCartItem(cartItemId);
+  }, [deleteCartItem]);
 
-   const handleUpdateQuantity = (productId, newQuantity) => {
-        const quantity = parseInt(newQuantity, 10);
-        if (isNaN(quantity) || quantity < 1) {
-            handleRemoveFromCart(productId);
-        } else {
-            setCartItems(prevCartItems =>
-                prevCartItems.map(item =>
-                    item.id === productId ? { ...item, quantity: quantity } : item
-                )
-            );
-        }
+  // --- INTEGRATION: Update Quantity ---
+  const handleUpdateQuantity = async (productId, newQuantity) => {
+    // Not implemented in backend: so just ignore for now or show a message
+    setError('Update cart quantity is not implemented in backend.');
     };
 
   const handleToggleCart = () => {
@@ -214,13 +242,12 @@ export function CustomersPage() {
   // Handle theme change
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme);
-    setIsUserMenuOpen(false); // Close menu after selection
+    setIsUserMenuOpen(false);
   };
 
   // Handle navigation
   const handleNavigate = (page) => {
     setCurrentPage(page);
-    // Close any open popovers/modals when navigating
     setIsCartOpen(false);
     setIsUserMenuOpen(false);
     setSelectedProduct(null);
@@ -230,12 +257,11 @@ export function CustomersPage() {
 
   // Handle logout
   const handleLogout = () => {
-      console.log("User logged out (simulation)");
-      // Reset user-specific state
-      setCartItems([]);
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
       setSavedItems(new Set());
       setIsUserMenuOpen(false);
-      // In a real app, you'd clear tokens, redirect, etc.
+      window.location.href = '/auth';
   };
 
   // --- Render Content Based on Page ---
@@ -306,15 +332,14 @@ export function CustomersPage() {
 
   // --- Final Render ---
   return (
-    // Main container with theme-dependent background
     <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gradient-to-br dark:from-slate-900 dark:via-blue-950 dark:to-slate-900 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300">
       {/* Header Component */}
       <Header
-        cartItemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+        cartItemCount={cart.reduce((sum, item) => sum + (item.quantity || 1), 0)}
         onCartClick={handleToggleCart}
         onUserClick={handleToggleUserMenu}
-        onNavigate={handleNavigate} // Pass navigation handler
-        currentPage={currentPage} // Pass current page for active state
+        onNavigate={handleNavigate}
+        currentPage={currentPage}
       />
 
       {/* Main Content Area with Sidebar */}
@@ -332,11 +357,11 @@ export function CustomersPage() {
         )}
 
         {/* Content Area */}
-        <main className={`flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto relative ${currentPage !== PAGES.HOME ? 'w-full' : ''}`}> {/* Adjust width if sidebar is hidden */}
+        <main className={`flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto relative ${currentPage !== PAGES.HOME ? 'w-full' : ''}`}>
           {/* Popovers */}
           {isCartOpen && (
             <CartPopover
-              cartItems={cartItems}
+              cartItems={cart}
               onClose={handleToggleCart}
               onRemove={handleRemoveFromCart}
               onUpdateQuantity={handleUpdateQuantity}
@@ -352,7 +377,9 @@ export function CustomersPage() {
           )}
 
           {/* Render Page Content */}
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            {loading && <div className="text-center text-emerald-600 dark:text-emerald-400 py-4">Loading...</div>}
+            {error && <div className="text-center text-red-600 dark:text-red-400 py-4">{error}</div>}
             {renderPageContent()}
           </div>
         </main>
@@ -385,7 +412,6 @@ export function CustomersPage() {
   );
 }
 
-
 // --- Sub Components ---
 
 // Header Component
@@ -402,7 +428,7 @@ function Header({ cartItemCount, onCartClick, onUserClick, onNavigate, currentPa
           <button onClick={() => onNavigate(PAGES.HOME)} className="flex-shrink-0 flex items-center focus:outline-none">
              <Package className="h-8 w-auto text-emerald-600 dark:text-emerald-500" />
              {/* Theme-aware text color */}
-             <span className="ml-2 text-xl font-bold text-gray-900 dark:text-gray-100">ShopSphere</span>
+             <a href='/customer' className="ml-2 text-xl font-bold text-black dark:text-gray-100">MDS Platform</a>
           </button>
 
           {/* Navigation Links */}
@@ -547,9 +573,12 @@ function UserMenuPopover({ onClose, onThemeChange, currentTheme, onLogout }) {
 
 // Cart Popover Component
 function CartPopover({ cartItems, onClose, onRemove, onUpdateQuantity }) {
-  const subtotal = useMemo(() => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0), [cartItems]);
-  const tax = useMemo(() => subtotal * TAX_RATE, [subtotal]);
-  const total = useMemo(() => subtotal + tax, [subtotal, tax]);
+  const navigate = useNavigate();
+  const subtotal = useMemo(
+    () => cartItems.reduce((sum, item) => sum + ((item.product?.price || 0) * item.quantity), 0),
+    [cartItems]
+  );
+  const total = subtotal; // No tax
 
   return (
     // Use theme-aware colors
@@ -569,24 +598,33 @@ function CartPopover({ cartItems, onClose, onRemove, onUpdateQuantity }) {
         ) : (
           <ul className="space-y-3">
             {cartItems.map(item => (
-              // Use theme-aware colors
-              <li key={item.id} className="flex items-center space-x-3 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-md">
-                <img src={item.imageUrl} alt={item.name} className="w-12 h-12 object-cover rounded-md flex-shrink-0 bg-gray-200 dark:bg-gray-600" onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/48x48/e5e7eb/9ca3af?text=N/A`; }}/>
+              <li key={item._id || item.id} className="flex items-center space-x-3 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-md">
+                <img
+                  src={getImageUrl(item.product?.image)}
+                  alt={item.product?.name}
+                  className="w-12 h-12 object-cover rounded-md flex-shrink-0 bg-gray-200 dark:bg-gray-600"
+                  onError={(e) => {
+                    console.error('Image failed to load:', item.product?.image);
+                    console.error('Attempted URL:', e.target.src);
+                    e.target.onerror = null;
+                    e.target.src = 'https://placehold.co/48x48/e5e7eb/9ca3af?text=N/A';
+                  }}
+                />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{item.name}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{item.product?.name}</p>
                   <div className="flex items-center mt-1">
                     <span className="text-xs text-gray-600 dark:text-gray-400 mr-1">Qty:</span>
                     <input
                         type="number"
                         min="1"
                         value={item.quantity}
-                        onChange={(e) => onUpdateQuantity(item.id, e.target.value)} // Pass value directly
+                        onChange={(e) => onUpdateQuantity(item._id || item.id, e.target.value)}
                         className="w-12 px-1 py-0.5 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded text-xs text-center text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
                   </div>
-                   <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-1">${(item.price * item.quantity).toFixed(2)}</p>
+                   <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-1">${((item.product?.price || 0) * item.quantity).toFixed(2)}</p>
                 </div>
-                <button onClick={() => onRemove(item.id)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                <button onClick={() => { console.log('Remove button clicked for cart item:', item._id); onRemove(item._id); }} className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </li>
@@ -597,24 +635,18 @@ function CartPopover({ cartItems, onClose, onRemove, onUpdateQuantity }) {
 
       {/* Cart Footer (Totals) */}
       {cartItems.length > 0 && (
-        // Use theme-aware colors
         <div className="p-3 border-t border-gray-200 dark:border-gray-700 sticky bottom-0 bg-white dark:bg-gray-800 z-10">
           <div className="space-y-1 text-sm mb-3">
             <div className="flex justify-between text-gray-700 dark:text-gray-300">
               <span>Subtotal:</span>
               <span>${subtotal.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-gray-500 dark:text-gray-400">
-              <span>Tax ({ (TAX_RATE * 100).toFixed(0) }%):</span>
-              <span>${tax.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between font-semibold text-lg text-emerald-700 dark:text-emerald-400 pt-1 border-t border-gray-300 dark:border-gray-600 mt-1">
-              <span>Total:</span>
-              <span>${total.toFixed(2)}</span>
-            </div>
           </div>
-          <button className="w-full px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-800 transition duration-150 ease-in-out">
-            Checkout
+          <button
+            className="w-full px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-800 transition duration-150 ease-in-out mb-2"
+            onClick={() => navigate('/cart')}
+          >
+            View Cart Details
           </button>
         </div>
       )}
@@ -789,6 +821,7 @@ function ProductCard({ product, onSelect, onSaveToggle, isSaved, onAddToCart }) 
 
   const handleCartClick = (e) => {
     e.stopPropagation();
+    console.log('Add to Cart button clicked (id):', product._id || product.id);
     onAddToCart(product);
   };
 
@@ -798,11 +831,16 @@ function ProductCard({ product, onSelect, onSaveToggle, isSaved, onAddToCart }) 
       {/* Image Section */}
       <div className="relative">
         <img
-          src={product.imageUrl}
+          src={getImageUrl(product.image)}
           alt={product.name}
           className="w-full h-48 object-cover cursor-pointer group-hover:scale-105 transition-transform duration-300"
           onClick={() => onSelect(product)}
-          onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/300x192/f3f4f6/9ca3af?text=Error`; }} // Light mode placeholder
+          onError={(e) => { 
+            console.error('Image failed to load:', product.image);
+            console.error('Attempted URL:', e.target.src);
+            e.target.onerror = null; 
+            e.target.src = 'https://placehold.co/400x400/f3f4f6/9ca3af?text=Not+Found';
+          }}
         />
         {/* Save Icon Button - Theme-aware */}
         <button
@@ -856,6 +894,7 @@ function ProductDetailModal({ product, onClose, onAddToCart }) {
 
   const handleModalCartClick = (e) => {
     e.stopPropagation();
+    console.log('Add to Cart button clicked (modal, id):', product._id || product.id);
     onAddToCart(product);
     // onClose(); // Keep modal open after adding
   };
@@ -875,10 +914,15 @@ function ProductDetailModal({ product, onClose, onAddToCart }) {
                 {/* Image Column */}
                 <div className="mb-4 md:mb-0 flex items-center justify-center">
                     <img
-                        src={product.imageUrl}
+                        src={getImageUrl(product.image)}
                         alt={product.name}
                         className="w-full max-w-sm h-auto max-h-96 object-contain rounded-md border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-700/30"
-                        onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/400x400/f3f4f6/9ca3af?text=Not+Found`; }}
+                        onError={(e) => { 
+                            console.error('Image failed to load:', product.image);
+                            console.error('Attempted URL:', e.target.src);
+                            e.target.onerror = null; 
+                            e.target.src = 'https://placehold.co/400x400/f3f4f6/9ca3af?text=Not+Found';
+                        }}
                     />
                 </div>
                 {/* Details Column - Theme-aware text */}

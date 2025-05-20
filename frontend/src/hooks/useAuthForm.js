@@ -2,24 +2,26 @@ import { useState } from 'react';
 import axios from 'axios';
 import { ROLES } from '../constants';
 import { API_BASE_URL } from '../config';
+import { useNavigate } from 'react-router-dom';
 
 export const useAuthForm = () => {
     const [authMode, setAuthMode] = useState('login');
     const [selectedRole, setSelectedRole] = useState(ROLES.CUSTOMER);
     const [formData, setFormData] = useState({
         name: '', email: '', phone: '', password: '', confirmPassword: '',
-        businessName: '', documentation: null, locationLink: '',
+        businessName: '', documentation: null, location: null,
         vehicleType: '', plateNumber: '', drivingLicense: null,
     });
     const [errors, setErrors] = useState({});
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const navigate = useNavigate();
 
     const resetFormState = (mode = 'login', role = ROLES.CUSTOMER) => {
         setFormData({
             name: '', email: '', phone: '', password: '', confirmPassword: '',
-            businessName: '', documentation: null, locationLink: '',
+            businessName: '', documentation: null, location: null,
             vehicleType: '', plateNumber: '', drivingLicense: null,
         });
         setSelectedRole(role);
@@ -30,15 +32,23 @@ export const useAuthForm = () => {
         setIsLoading(false);
     };
 
+    // Accepts both event and direct value for location
     const handleInputChange = (e) => {
-        const { name, value, type, files } = e.target;
-        const inputValue = type === 'file' ? files[0] : value;
-        setFormData(prev => ({ ...prev, [name]: inputValue }));
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: null }));
-        }
-        if (name === 'password' && errors.confirmPassword) {
-            setErrors(prev => ({ ...prev, confirmPassword: null }));
+        if (e && e.target) {
+            const { name, value, type, files } = e.target;
+            const inputValue = type === 'file' ? files[0] : value;
+            setFormData(prev => ({ ...prev, [name]: inputValue }));
+            if (errors[name]) {
+                setErrors(prev => ({ ...prev, [name]: null }));
+            }
+            if (name === 'password' && errors.confirmPassword) {
+                setErrors(prev => ({ ...prev, confirmPassword: null }));
+            }
+        } else if (e && e.name === 'location') {
+            setFormData(prev => ({ ...prev, location: e.value }));
+            if (errors.location) {
+                setErrors(prev => ({ ...prev, location: null }));
+            }
         }
     };
 
@@ -47,11 +57,11 @@ export const useAuthForm = () => {
         setSelectedRole(newRole);
         setFormData(prev => ({
             ...prev,
-            businessName: '', documentation: null, locationLink: '',
+            businessName: '', documentation: null, location: null,
             vehicleType: '', plateNumber: '', drivingLicense: null,
         }));
         // eslint-disable-next-line no-unused-vars
-        const { businessName, documentation, locationLink, vehicleType, plateNumber, drivingLicense, ...commonErrors } = errors;
+        const { businessName, documentation, location, vehicleType, plateNumber, drivingLicense, ...commonErrors } = errors;
         setErrors(commonErrors);
     };
 
@@ -74,7 +84,6 @@ export const useAuthForm = () => {
 
         if (authMode === 'signup') {
             if (!formData.name.trim()) newErrors.name = 'Name is required';
-            
             if (!formData.email.trim()) newErrors.email = 'Email is required';
             else if (!emailRegex.test(formData.email)) newErrors.email = 'Invalid email format';
 
@@ -91,7 +100,7 @@ export const useAuthForm = () => {
                     phoneToValidate = rawPhone.substring(1);
                 }
 
-                if (!/^\d*$/.test(phoneToValidate)) { // Checks if all remaining characters are digits
+                if (!/^\d*$/.test(phoneToValidate)) {
                     if (hasLeadingPlus) {
                         newErrors.phone = 'Invalid characters after "+". Only digits are allowed.';
                     } else {
@@ -105,18 +114,20 @@ export const useAuthForm = () => {
 
             if (!formData.password) newErrors.password = 'Password is required';
             else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-            
+
             if (!formData.confirmPassword) newErrors.confirmPassword = 'Please confirm your password';
             else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
 
             if (selectedRole === ROLES.MERCHANT) {
                 if (!formData.businessName.trim()) newErrors.businessName = 'Business name is required';
-                if (!formData.documentation) newErrors.documentation = 'Documentation upload is required'; // Assuming File object or null
-                if (!formData.locationLink.trim()) newErrors.locationLink = 'Location link is required';
+                if (!formData.documentation) newErrors.documentation = 'Documentation upload is required';
+                if (!formData.location || !formData.location.lat || !formData.location.lng) {
+                    newErrors.location = 'Business location is required';
+                }
             } else if (selectedRole === ROLES.DSP) {
                 if (!formData.vehicleType.trim()) newErrors.vehicleType = 'Vehicle type is required';
                 if (!formData.plateNumber.trim()) newErrors.plateNumber = 'Plate number is required';
-                if (!formData.drivingLicense) newErrors.drivingLicense = 'Driving license upload is required'; // Assuming File object or null
+                if (!formData.drivingLicense) newErrors.drivingLicense = 'Driving license upload is required';
             }
         } else if (authMode === 'login') {
             if (!formData.email.trim()) newErrors.email = 'Email is required';
@@ -149,8 +160,11 @@ export const useAuthForm = () => {
             });
             console.log("Login successful:", response.data);
             if (response.data.token) {
+                let user = response.data.user;
+                // Patch: ensure _id exists
+                if (!user._id && user.id) user._id = user.id;
                 localStorage.setItem('authToken', response.data.token);
-                localStorage.setItem('user', JSON.stringify(response.data.user));
+                localStorage.setItem('user', JSON.stringify(user));
                 const userRole = response.data.user.role.toLowerCase();
                 const redirectPaths = {
                     'customer': '/customer', 'admin': '/admin',
@@ -188,7 +202,8 @@ export const useAuthForm = () => {
 
                 if (selectedRole === ROLES.MERCHANT) {
                     formDataToSend.append('storeName', formData.businessName);
-                    formDataToSend.append('location', formData.locationLink);
+                    // Send location as JSON string or as separate fields
+                    formDataToSend.append('location', JSON.stringify(formData.location));
                     if (formData.documentation) {
                         formDataToSend.append('tradeLicense', formData.documentation);
                     }
@@ -205,66 +220,22 @@ export const useAuthForm = () => {
                 response = await axios.post(`${API_BASE_URL}/users/add`, formDataToSend, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-            } else {
-                // Customer: send as JSON
-                const signupPayload = {
-                    name: formData.name,
-                    email: formData.email,
-                    phoneNumber: formData.phone,
-                    password: formData.password,
-                    role: selectedRole
-                };
-                response = await axios.post(`${API_BASE_URL}/users/add`, signupPayload, {
-                    headers: { 'Content-Type': 'application/json' }
-                });
             }
 
-            console.log("Signup successful:", response.data);
-            if (response.data.token) {
-                // Store token and user data
-                localStorage.setItem('authToken', response.data.token);
-                localStorage.setItem('user', JSON.stringify({
-                    id: response.data.id,
-                    name: response.data.name,
-                    email: response.data.email,
-                    role: response.data.role,
-                    phoneNumber: response.data.phoneNumber,
-                    status: response.data.status
-                }));
-                // Redirect based on role
-                const role = response.data.role.toLowerCase();
-                switch (role) {
-                    case 'customer':
-                        window.location.href = '/customer';
-                        break;
-                    case 'merchant':
-                        window.location.href = '/merchant';
-                        break;
-                    case 'dsp':
-                        window.location.href = '/dsp';
-                        break;
-                    default:
-                        window.location.href = '/';
-                        break;
-                }
-            } else {
-                setErrors(prev => ({ ...prev, form: response.data.message || 'Signup completed but no token received.'}));
+            if (response.data) {
+                // Navigate to success page with role information
+                navigate('/registration-success', { 
+                    state: { 
+                        role: selectedRole,
+                        email: formData.email 
+                    } 
+                });
             }
         } catch (error) {
-            console.error("Signup error:", error.response ? error.response.data : error.message);
-            let errorMessage = error.response?.data?.message || error.response?.data?.error || 'Signup failed. Please try again.';
-            // If there are nested Mongoose validation errors, display the first one
-            if (error.response?.data?.error && typeof error.response.data.error === 'object') {
-                const errObj = error.response.data.error;
-                if (errObj.errors) {
-                    // Get the first error message from Mongoose validation errors
-                    const firstKey = Object.keys(errObj.errors)[0];
-                    if (firstKey && errObj.errors[firstKey]?.message) {
-                        errorMessage = errObj.errors[firstKey].message;
-                    }
-                }
-            }
-            setErrors(prev => ({ ...prev, form: errorMessage }));
+            console.error('Signup error:', error);
+            setErrors({
+                form: error.response?.data?.message || 'An error occurred during signup'
+            });
         } finally {
             setIsLoading(false);
         }
@@ -290,4 +261,4 @@ export const useAuthForm = () => {
         handleLoginSubmit, handleSignupSubmit, handleForgotPasswordSubmit,
         toggleMode, handleForgotPasswordClick, handleBackToLoginClick,
     };
-}; 
+};
