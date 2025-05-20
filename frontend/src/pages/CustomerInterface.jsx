@@ -72,8 +72,28 @@ export default function App() {
         } else {
             document.documentElement.classList.remove('dark');
         }
-    }, []);
-    return <CustomersPage />;
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }
+        .animate-scaleUp { animation: scaleUp 0.3s ease-out forwards; }
+        @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+        @keyframes scaleUp { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #94a3b8;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #64748b;
+        }
+      `}</style>
+    </div>
+  );
 }
 
 // --- Customers Page Component ---
@@ -105,14 +125,108 @@ export function CustomersPage() {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'system'); // 'light', 'dark', 'system'
   const [currentPage, setCurrentPage] = useState(PAGES.HOME); // State for navigation
 
-  // Memoized values
-  const categories = useMemo(() => [...new Set(products.map(p => p.category))], [products]);
-  const colors = useMemo(() => [...new Set(products.map(p => p.color))], [products]);
-  const frequentlyBoughtItems = useMemo(() => products.filter(p => p.isFrequentlyBought), [products]);
+  switch (order.status) {
+    case 'Processing':
+      statusDisplay = "Order Processing";
+      statusColorClass = "text-emerald-600 dark:text-emerald-400";
+      break;
+    case 'Out for Delivery':
+      statusDisplay = "Out for Delivery";
+      statusColorClass = "text-emerald-600 dark:text-emerald-400 animate-pulse";
+      break;
+    case 'Delivered':
+      statusDisplay = "Delivered!";
+      statusColorClass = "text-green-600 dark:text-green-400";
+      break;
+    case 'Cancelled':
+      statusDisplay = "Order Cancelled";
+      statusColorClass = "text-red-600 dark:text-red-400";
+      break;
+    default:
+      statusDisplay = order.status;
+  }
 
-  // --- Effects ---
+  return (
+    <div className="h-full flex flex-col">
+      <div className="flex-grow relative min-h-[200px] md:min-h-[300px]">
+        <CustomerMapView
+          customerLocation={order.customerLocation}
+          dspLocation={order.dsp.location}
+          destinationAddress={order.deliveryAddress}
+        />
+      </div>
 
-  // Effect for applying theme
+      <div className="bg-white dark:bg-gray-800 p-4 sm:p-5 shadow-top-lg border-t border-slate-200 dark:border-gray-700 rounded-t-2xl z-10">
+        <div className="flex justify-between items-start mb-3">
+          <div>
+            <h2 className={`text-2xl font-bold ${statusColorClass}`}>{statusDisplay}</h2>
+            {order.status === 'Out for Delivery' && order.eta > 0 && (
+              <p className="text-emerald-700 dark:text-emerald-400 font-semibold text-lg flex items-center mt-1">
+                <Clock size={20} className="mr-2 flex-shrink-0"/> ETA: {order.eta} min
+              </p>
+            )}
+            {order.status === 'Delivered' && (
+                <p className="text-green-700 dark:text-green-400 font-semibold text-lg flex items-center mt-1">
+                    <CheckCircle size={20} className="mr-2 flex-shrink-0 text-green-500 dark:text-green-400"/> Enjoy your meal!
+                </p>
+            )}
+          </div>
+          <div className="text-right flex-shrink-0 ml-2">
+              <p className="text-sm text-slate-500 dark:text-gray-400">Driver</p>
+              <p className="font-semibold text-slate-700 dark:text-gray-300">{order.dsp.name}</p>
+              <p className="text-xs text-slate-500 dark:text-gray-400">{order.dsp.vehicle}</p>
+          </div>
+        </div>
+
+        <div className="mb-4">
+            <h4 className="font-semibold text-slate-700 dark:text-gray-300 mb-1">Items:</h4>
+            <ul className="text-sm text-slate-600 dark:text-gray-400 list-disc list-inside pl-1 max-h-20 overflow-y-auto custom-scrollbar">
+                {order.items.map(item => (
+                    <li key={item.name} className="truncate">{item.quantity}x {item.name}</li>
+                ))}
+            </ul>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <button
+            onClick={onOpenChat}
+            className="flex items-center justify-center w-full bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg shadow hover:shadow-md transition-all duration-150 ease-in-out space-x-2 active:bg-emerald-700"
+          >
+            <MessageSquare size={20}/>
+            <span>Chat</span>
+          </button>
+          <button
+            onClick={onOpenReport}
+            className="flex items-center justify-center w-full bg-slate-200 dark:bg-gray-700 hover:bg-slate-300 dark:hover:bg-gray-600 text-slate-700 dark:text-gray-300 font-semibold py-3 px-4 rounded-lg shadow hover:shadow-md transition-all duration-150 ease-in-out space-x-2 active:bg-slate-400 dark:active:bg-gray-500"
+          >
+            <AlertCircle size={20}/>
+            <span>Report Issue</span>
+          </button>
+        </div>
+        {order.status === 'Delivered' && (
+             <button
+                onClick={onRateOrder}
+                className="w-full flex items-center justify-center bg-amber-400 hover:bg-amber-500 dark:bg-amber-500 dark:hover:bg-amber-600 text-white font-semibold py-3 px-4 rounded-lg shadow hover:shadow-md transition-all duration-150 ease-in-out space-x-2 active:bg-amber-600 dark:active:bg-amber-700"
+            >
+                <Star size={20}/>
+                <span>Rate Delivery</span>
+            </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Customer Map View Component (Leaflet Integration)
+function CustomerMapView({ customerLocation, dspLocation, destinationAddress }) {
+  const mapContainerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const customerMarkerRef = useRef(null);
+  const dspMarkerRef = useRef(null);
+
+  const [mapLoadingMessage, setMapLoadingMessage] = useState('Initializing map...');
+  const [isUserInteracting, setIsUserInteracting] = useState(false);
+
   useEffect(() => {
     const root = window.document.documentElement;
     const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -157,41 +271,46 @@ export function CustomersPage() {
     setFilteredProducts(tempProducts);
   }, [activeFilters, products, searchTerm]);
 
-  // --- Event Handlers ---
+    if (mapContainerRef.current && !mapInstanceRef.current) {
+      try {
+        setMapLoadingMessage('Loading map...');
+        const map = L.map(mapContainerRef.current, {
+            zoomControl: false
+        }).setView([customerLocation.lat, customerLocation.lng], 15);
 
-  const handleFilterChange = (filterType, value) => {
-    setActiveFilters(prev => ({ ...prev, [filterType]: value }));
-  };
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19,
+          minZoom: 5,
+        }).addTo(map);
 
-  const handleSearchChange = (event) => {
-    setSearchTerm(event.target.value);
-  };
+        L.control.zoom({ position: 'topright' }).addTo(map);
 
-  const handleProductSelect = (product) => {
-    setSelectedProduct(product);
-    setIsCartOpen(false);
-    setIsUserMenuOpen(false);
-  };
+        mapInstanceRef.current = map;
+        setMapLoadingMessage('');
 
-  const handleCloseModal = () => {
-    setSelectedProduct(null);
-  };
+        map.on('dragstart', () => setIsUserInteracting(true));
+        map.on('zoomstart', () => setIsUserInteracting(true));
 
-  const handleToggleChat = () => {
-    setIsChatOpen(!isChatOpen);
-    if (selectedProduct) handleCloseModal();
-    setIsCartOpen(false);
-    setIsUserMenuOpen(false);
-  };
+        // Customer Icon (Home) - Using a distinct but harmonious color
+        const customerIcon = L.divIcon({
+            html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="%2334d399"><path d="M12 2c-4.418 0-8 3.582-8 8 0 4.418 8 12 8 12s8-7.582 8-12c0-4.418-3.582-8-8-8zm0 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/><circle cx="12" cy="10" r="2.5" fill="white"/></svg>`,
+            className: 'custom-map-icon',
+            iconSize: [36, 36], iconAnchor: [18, 36], popupAnchor: [0, -32],
+        });
+        customerMarkerRef.current = L.marker([customerLocation.lat, customerLocation.lng], { icon: customerIcon, zIndexOffset: 1000, title: 'Your Location' })
+          .addTo(map)
+          .bindPopup(`<b>Your Address:</b><br>${destinationAddress}`);
 
-  const handleSaveToggle = (productId) => {
-    setSavedItems(prev => {
-      const newSavedItems = new Set(prev);
-      if (newSavedItems.has(productId)) newSavedItems.delete(productId);
-      else newSavedItems.add(productId);
-      return newSavedItems;
-    });
-  };
+        // DSP Icon (Delivery Vehicle) - Already emerald
+        const dspIcon = L.divIcon({
+            html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="40" height="40" fill="%2310b981"><path d="M19.586 3.414a2 2 0 00-2.828 0L12 8.172 7.242 3.414a2 2 0 00-2.828 2.828L8.172 12l-4.758 4.758a2 2 0 002.828 2.828L12 15.828l4.758 4.758a2 2 0 002.828-2.828zM12 13a1 1 0 110-2 1 1 0 010 2z" transform="rotate(45 12 12) scale(0.8)"/><path d="M18.364 5.636A9 9 0 005.636 18.364 9 9 0 0018.364 5.636zM12 20a8 8 0 110-16 8 8 0 010 16z" fill-opacity="0.3"/><circle cx="12" cy="12" r="2" fill="white"/></svg>`,
+            className: 'custom-map-icon',
+            iconSize: [40, 40], iconAnchor: [20, 20], popupAnchor: [0, -30],
+        });
+        dspMarkerRef.current = L.marker([dspLocation.lat, dspLocation.lng], { icon: dspIcon, title: 'Delivery Driver' })
+          .addTo(map)
+          .bindPopup("Your Driver");
 
   // --- INTEGRATION: Add to Cart ---
   const handleAddToCart = useCallback((productToAdd) => {
@@ -492,14 +611,11 @@ function Header({ cartItemCount, onCartClick, onUserClick, onNavigate, currentPa
 // Footer Component
 function Footer() {
     return (
-        // Use theme-aware background and border colors
-        <footer className="bg-gray-200 dark:bg-slate-900 border-t border-gray-300 dark:border-gray-700/50 mt-auto transition-colors duration-300">
-            <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center text-gray-600 dark:text-gray-400 text-sm">
-                <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-6 mb-4">
-                    {/* Use theme-aware hover colors */}
-                    <a href="#" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center"><Info className="w-4 h-4 mr-1"/> About Us</a>
-                    <a href="#" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center"><Phone className="w-4 h-4 mr-1"/> Contact</a>
-                    <a href="#" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center"><Settings className="w-4 h-4 mr-1"/> Terms of Service</a>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+            <div className="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-xl shadow-2xl w-full max-w-md animate-scaleUp">
+                <div className="flex justify-between items-center mb-5">
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-gray-200">Rate {dspName}'s Delivery</h2>
+                    <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-gray-400 dark:hover:text-gray-300 rounded-full hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors"><X size={22}/></button>
                 </div>
                 <p>&copy; {new Date().getFullYear()} ShopSphere. All rights reserved.</p>
                 <p>Debre Markos, Ethiopia</p>
@@ -933,107 +1049,114 @@ function ProductDetailModal({ product, onClose, onAddToCart }) {
                         {renderRatingStars(product.rating)}
                         <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">({product.rating.toFixed(1)} rating)</span>
                     </div>
-                    <p className="text-3xl lg:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400 mb-5">${product.price.toFixed(2)}</p>
-                    <h3 className="text-md font-semibold text-gray-800 dark:text-gray-200 mb-1">Description</h3>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">{product.description}</p>
-                    {/* Action Buttons - Theme-aware */}
-                    <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 mt-auto">
-                        <button
-                            onClick={handleModalCartClick}
-                            className="flex-1 px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-800 transition duration-150 ease-in-out flex items-center justify-center space-x-1.5 shadow-md hover:shadow-lg"
-                        >
-                            <ShoppingCart className="w-5 h-5"/>
-                            <span>Add to Cart</span>
-                        </button>
-                        <button className="flex-1 px-5 py-2.5 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-800 transition duration-150 ease-in-out flex items-center justify-center space-x-1.5 shadow-md hover:shadow-lg">
-                            <Heart className="w-5 h-5" />
-                            <span>Save Item</span>
-                        </button>
+                    <div className="mb-6">
+                        <label htmlFor="feedback" className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1.5">Additional Feedback (Optional)</label>
+                        <textarea
+                            id="feedback"
+                            value={feedback}
+                            onChange={(e) => setFeedback(e.target.value)}
+                            rows="3"
+                            placeholder={`Any comments on the delivery by ${dspName}? (e.g., speed, professionalism)`}
+                            className="w-full p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:border-emerald-500 dark:focus:border-emerald-400 outline-none text-slate-700 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 text-sm"
+                        ></textarea>
                     </div>
-                </div>
+                    <button
+                        type="submit"
+                        disabled={rating === 0}
+                        className="w-full bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg shadow hover:shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed active:bg-emerald-700 dark:active:bg-emerald-800"
+                    >
+                        <ThumbsUp size={20}/>
+                        <span>Submit Rating</span>
+                    </button>
+                </form>
             </div>
         </div>
-      </div>
-      {/* Modal Animation */}
-      <style jsx global>{`
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .animate-fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
-      `}</style>
-    </div>
-  );
+    );
 }
 
+// Report Issue Modal Component
+function ReportIssueModal({ orderId, onSubmit, onClose }) {
+    const [issueType, setIssueType] = useState('');
+    const [details, setDetails] = useState('');
 
-// Chat Interface Placeholder Component - Themed
-function ChatInterface({ onClose }) {
-  return (
-    // Theme-aware chat container
-    <div className="fixed bottom-24 right-6 z-50 w-80 h-96 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-lg shadow-xl border border-gray-200 dark:border-gray-700/50 flex flex-col animate-fade-in-up">
-      {/* Header - Theme-aware */}
-      <div className="flex justify-between items-center p-3 bg-emerald-600/90 dark:bg-emerald-700/80 text-white rounded-t-lg border-b border-emerald-500/50 dark:border-emerald-600/50">
-        <h3 className="font-semibold text-md">Chat Support</h3>
-        <button onClick={onClose} className="p-1 rounded-full hover:bg-emerald-500 dark:hover:bg-emerald-600 focus:outline-none focus:ring-1 focus:ring-white">
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-      {/* Body - Theme-aware */}
-      <div className="flex-1 p-4 overflow-y-auto text-sm flex flex-col space-y-2">
-        {/* Received Message - Theme-aware */}
-        <div className="flex justify-start">
-             <p className="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-200 p-2 rounded-lg max-w-[80%]">Hello! How can I help you today?</p>
-        </div>
-         {/* Sent Message - Theme-aware */}
-         <div className="flex justify-end">
-             <p className="bg-emerald-500 dark:bg-emerald-600 text-white p-2 rounded-lg max-w-[80%]">I have a question about product #5.</p>
-         </div>
-         <div className="flex-grow flex items-end">
-            <p className="text-center text-gray-400 dark:text-gray-500 text-xs w-full">Chat interface placeholder</p>
-         </div>
-      </div>
-      {/* Input Area - Theme-aware */}
-      <div className="p-2 border-t border-gray-200 dark:border-gray-700/50">
-        <input
-            type="text"
-            placeholder="Type your message..."
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
-        />
-      </div>
-      {/* Chat Animation */}
-       <style jsx global>{`
-         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-         .animate-fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
-       `}</style>
-    </div>
-  );
-}
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!issueType) {
+            alert("Please select an issue type.");
+            return;
+        }
+        if (issueType === "Other" && details.trim().length < 5) {
+            alert("Please provide a brief description for 'Other' issue type (at least 5 characters).");
+            return;
+        }
+        onSubmit({ orderId, issueType, details: details.trim() });
+    };
 
-// --- Placeholder Page Components ---
+    const commonIssueTypes = [
+        "Order was significantly late",
+        "Item(s) were damaged",
+        "Missing item(s) from order",
+        "Driver behavior was unprofessional",
+        "Received incorrect order",
+        "Food quality unsatisfactory (restaurant issue)",
+        "Other"
+    ];
 
-function DealsPage() {
     return (
-        <div className="text-center py-10">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">Deals Page</h2>
-            <p className="text-gray-600 dark:text-gray-400">Exciting deals coming soon!</p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+            <div className="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-xl shadow-2xl w-full max-w-lg animate-scaleUp">
+                 <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-gray-200">Report an Issue</h2>
+                    <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-gray-400 dark:hover:text-gray-300 rounded-full hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors"><X size={22}/></button>
+                </div>
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    <div>
+                        <label htmlFor="issueType" className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1.5">What went wrong?</label>
+                        <div className="relative">
+                            <select
+                                id="issueType"
+                                value={issueType}
+                                onChange={(e) => setIssueType(e.target.value)}
+                                className="w-full p-3 pr-10 bg-slate-50 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:border-emerald-500 dark:focus:border-emerald-400 outline-none text-slate-700 dark:text-gray-200 appearance-none text-sm sm:text-base"
+                                required
+                            >
+                                <option value="" disabled>Select an issue type...</option>
+                                {commonIssueTypes.map(type => <option key={type} value={type}>{type}</option>)}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 dark:text-gray-400">
+                                <ChevronDown size={20} />
+                            </div>
+                        </div>
+                    </div>
+                     {issueType && (
+                        <div>
+                            <label htmlFor="reportDetails" className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1.5">
+                                {issueType === "Other" ? "Please specify your issue:" : "Additional Details (Optional):"}
+                            </label>
+                            <textarea
+                                id="reportDetails"
+                                value={details}
+                                onChange={(e) => setDetails(e.target.value)}
+                                rows="3"
+                                placeholder={issueType === "Other" ? "Explain the issue briefly..." : "Provide any other relevant information..."}
+                                className="w-full p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:border-emerald-500 dark:focus:border-emerald-400 outline-none text-slate-700 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 text-sm"
+                                maxLength={issueType === "Other" ? 200 : 500}
+                            ></textarea>
+                            <p className="text-xs text-slate-400 dark:text-gray-400 mt-1 text-right">{details.length}/{issueType === "Other" ? 200 : 500}</p>
+                        </div>
+                     )}
+                    <button
+                        type="submit"
+                        disabled={!issueType || (issueType === "Other" && details.trim().length < 5)}
+                        className="w-full bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg shadow hover:shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed active:bg-red-700 dark:active:bg-red-800"
+                    >
+                        <AlertCircle size={20}/>
+                        <span>Submit Report</span>
+                    </button>
+                </form>
+            </div>
         </div>
     );
 }
 
-function NewArrivalsPage() {
-    return (
-        <div className="text-center py-10">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">New Arrivals</h2>
-            <p className="text-gray-600 dark:text-gray-400">Check out the latest products!</p>
-             {/* You could potentially reuse ProductGrid here with different data */}
-        </div>
-    );
-}
-
-function SupportPage() {
-    return (
-        <div className="text-center py-10">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">Support Center</h2>
-            <p className="text-gray-600 dark:text-gray-400">How can we help you?</p>
-            {/* Add FAQs, contact form, etc. */}
-        </div>
-    );
-}
+export default App;

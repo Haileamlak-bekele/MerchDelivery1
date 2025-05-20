@@ -75,6 +75,7 @@ export default function AppRouter() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/customer" element={<CustomerInterface />} />
+          <Route path='/admin' element={<AdminPage />}/>
           <Route path="/merchant" element={<MerchantInventoryPage />} />
           <Route path="/dsp" element={<LiveDeliveryTracking />} />
           <Route path ="/admin" element={<AdminPage/>}/>

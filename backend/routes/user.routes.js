@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const {addUser, getAllUsers, getUserById,DeleteUser,updateUser, loginUser} = require('../controllers/users.controller.js');
+const { uploadLicenseImage } = require('../middleware/Licence.js');
 
 // Configure multer for file upload
 const storage = multer.diskStorage({
