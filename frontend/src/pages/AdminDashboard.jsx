@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import {
   LayoutDashboard,
   Users,
@@ -7,9 +8,6 @@ import {
   Bell,
   UserCircle,
   ChevronDown,
-  AreaChart,
-  BarChart,
-  PieChart,
   Table,
   Package,
   Menu,
@@ -395,20 +393,23 @@ function OverviewSection() {
     { name: 'Jun', value: 900 },
   ];
 
-  const userGrowthData = [
-    { name: 'Jan', users: 100, merchants: 40 },
-    { name: 'Feb', users: 200, merchants: 80 },
-    { name: 'Mar', users: 300, merchants: 120 },
-    { name: 'Apr', users: 400, merchants: 160 },
-    { name: 'May', users: 500, merchants: 200 },
-    { name: 'Jun', users: 600, merchants: 240 },
-  ];
+ const userGrowthData = [
+  { name: 'Jan', users: stats.registeredUsers.monthly.find(item => item.month === 'January')?.count || 0 },
+  { name: 'Feb', users: stats.registeredUsers.monthly.find(item => item.month === 'February')?.count || 0 },
+  { name: 'Mar', users: stats.registeredUsers.monthly.find(item => item.month === 'March')?.count || 0 },
+  { name: 'Apr', users: stats.registeredUsers.monthly.find(item => item.month === 'April')?.count || 0 },
+  { name: 'May', users: stats.registeredUsers.monthly.find(item => item.month === 'May')?.count || 0 },
+  { name: 'Jun', users: stats.registeredUsers.monthly.find(item => item.month === 'June')?.count || 0 },
+  // Add more months as needed
+];
 
   const pieData = [
-    { name: 'Completed', value: 75, color: 'bg-emerald-500' },
-    { name: 'In Progress', value: 15, color: 'bg-blue-500' },
-    { name: 'Pending', value: 10, color: 'bg-yellow-500' },
+    { name: 'Completed', value: 75 },
+    { name: 'In Progress', value: 15 },
+    { name: 'Pending', value: 10 },
   ];
+
+  const COLORS = ['#00C49F', '#0088FE', '#FFBB28', '#FF8042', '#8884D8'];
 
   const recentActivities = [
     { id: 1, user: 'John Doe', action: 'placed a new order', time: '2 minutes ago', icon: ShoppingCart },
@@ -420,9 +421,9 @@ function OverviewSection() {
   // Define stats cards using fetched data
   const statsCards = [
     { name: 'Total Users', value: stats?.totalUsers || '0', icon: Users, change: '+12%', trend: 'up' },
-    { name: 'Total Merchants', value: stats?.roles?.merchant, icon: CreditCard, change: '+23%', trend: 'up' },
-    { name: 'Total Dsp', value: stats?.roles?.dsp, icon: AlertCircle, change: '-50%', trend: 'down' },
-    { name: 'Active Users', value: stats?.status?.active || '0', icon: Truck, change: '+5%', trend: 'up' },
+    { name: 'Active Deliveries', value: stats?.status?.active || '0', icon: Truck, change: '+5%', trend: 'up' },
+    { name: 'Revenue', value: '$34,567', icon: CreditCard, change: '+23%', trend: 'up' },
+    { name: 'Issues', value: '3', icon: AlertCircle, change: '-50%', trend: 'down' },
   ];
 
   return (
@@ -475,13 +476,15 @@ function OverviewSection() {
             </div>
           </div>
           <div className="h-64">
-            {/* Chart placeholder - in a real app, use a library like Chart.js or Recharts */}
-            <div className="h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
-              <div className="text-center">
-                <AreaChart className="h-12 w-12 mx-auto mb-2 text-emerald-500" />
-                <p>Delivery performance chart</p>
-              </div>
-            </div>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={deliveryData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Area type="monotone" dataKey="value" stroke="#8884d8" fill="#8884d8" />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
@@ -489,19 +492,22 @@ function OverviewSection() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Delivery Status</h3>
           <div className="h-64">
-            {/* Pie chart placeholder */}
-            <div className="h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
-              <div className="text-center">
-                <PieChart className="h-12 w-12 mx-auto mb-2 text-emerald-500" />
-                <p>Delivery status breakdown</p>
-              </div>
-            </div>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={pieData} cx="50%" cy="50%" labelLine={false} outerRadius={80} fill="#8884d8" dataKey="value">
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
           <div className="mt-4 space-y-2">
             {pieData.map((item, index) => (
               <div key={index} className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className={`h-3 w-3 rounded-full ${item.color} mr-2`}></div>
+                  <div className={`h-3 w-3 rounded-full ${COLORS[index % COLORS.length]} mr-2`}></div>
                   <span className="text-sm text-gray-600 dark:text-gray-300">{item.name}</span>
                 </div>
                 <span className="text-sm font-medium text-gray-900 dark:text-white">{item.value}%</span>
@@ -521,13 +527,15 @@ function OverviewSection() {
           </button>
         </div>
         <div className="h-64">
-          {/* Chart placeholder */}
-          <div className="h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
-            <div className="text-center">
-              <BarChart className="h-12 w-12 mx-auto mb-2 text-emerald-500" />
-              <p>User growth chart</p>
-            </div>
-          </div>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={userGrowthData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="users" fill="#8884d8" />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
@@ -558,6 +566,7 @@ function OverviewSection() {
     </div>
   );
 }
+
 
 // Users Section Component
 function UsersSection() {
@@ -765,11 +774,11 @@ function DeliveriesSection() {
 
 function MerchantSection() {
    
-  const {  merchants} = useUsers();
+  const { merchants} = useUsers();
 
    const [selectedMerchant, setSelectedMerchant] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+ 
   const openModal = (merchant) => {
     setSelectedMerchant(merchant);
     setIsModalOpen(true);

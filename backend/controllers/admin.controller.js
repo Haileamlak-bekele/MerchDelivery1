@@ -40,7 +40,7 @@ const getAllMerchants = async (req, res) => {
         };
       })
     );
-
+   
     res.json(merchants);
   } catch (error) {
     console.error('Error fetching merchants:', error);
@@ -133,6 +133,70 @@ const getPlatformStats = async (req, res) => {
     const pendingDsps = await DSP.countDocuments({ approvalStatus: "pending" });
     const rejectedDsps = await DSP.countDocuments({ approvalStatus: "rejected" });
 
+    // Get registered users by day of the week for the last 7 days
+    const weeklyRegisteredUsers = await User.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: new Date(new Date() - 7 * 24 * 60 * 60 * 1000) } // Last 7 days
+        }
+      },
+      {
+        $group: {
+          _id: { $dayOfWeek: "$createdAt" },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { "_id": 1 }
+      }
+    ]);
+
+    // Get registered users by month for the last year
+    const monthlyRegisteredUsers = await User.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: new Date(new Date() - 365 * 24 * 60 * 60 * 1000) } // Last 365 days
+        }
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { "_id": 1 }
+      }
+    ]);
+
+    // Format the weekly and monthly data
+    const formatWeeklyData = (data) => {
+      const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const formattedData = daysOfWeek.map((day, index) => {
+        const dayData = data.find(item => item._id === index + 1);
+        return {
+          day,
+          count: dayData ? dayData.count : 0
+        };
+      });
+      return formattedData;
+    };
+
+    const formatMonthlyData = (data) => {
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const formattedData = months.map((month, index) => {
+        const monthData = data.find(item => item._id === index + 1);
+        return {
+          month,
+          count: monthData ? monthData.count : 0
+        };
+      });
+      return formattedData;
+    };
+
+    const formattedWeeklyData = formatWeeklyData(weeklyRegisteredUsers);
+    const formattedMonthlyData = formatMonthlyData(monthlyRegisteredUsers);
+
     // Send response
     res.json({
       totalUsers,
@@ -156,12 +220,18 @@ const getPlatformStats = async (req, res) => {
         pending: pendingDsps,
         rejected: rejectedDsps,
       },
+      registeredUsers: {
+        weekly: formattedWeeklyData,
+        monthly: formattedMonthlyData,
+      },
     });
   } catch (error) {
     console.error("Error fetching platform stats:", error);
     res.status(500).json({ message: "Error fetching platform stats", error });
   }
 };
+
+
 
 // @desc Admin updates approval status (approve/reject merchant/DSP)
 const updateUserStatus = async (req, res) => {

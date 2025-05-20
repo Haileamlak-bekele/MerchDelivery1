@@ -16,7 +16,7 @@ export const fetchUsers = async () => {
 
 export const fetchMerchants = async () => {
   const response = await api.get('/admin/merchant');
-  console.log(response.data);
+  console.log("merchants", response.data);
   return response.data;
 };
 
@@ -31,4 +31,7 @@ export const updateMerchantStatus = async (id, status) => {
   const response = await api.put(`/admin/approve/${id}`, approvalStatus);
   return response.data;
 };
-
+export const deleteUsers = async (id) => {
+  const response = await api.delete(`/admin/user/${id}`);
+  return response.data;
+}
