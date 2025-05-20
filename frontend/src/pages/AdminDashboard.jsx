@@ -35,7 +35,7 @@ import DSPDetailModal from '../components/DSPDetailModal';
 
 import { useUsers } from '../hooks/useUsers';
 import DeliveryPriceSection from '../components/DeliveryPriceSection';
-
+import { fetchPlatformStats } from '../service/Service';
 
 // Main App component
 export default function App() {
@@ -362,12 +362,52 @@ function AdminDashboard({ darkMode, setDarkMode }) {
 
 // Overview Section Component
 // eslint-disable-next-line no-unused-vars
-function OverviewSection({ deliveryData, userGrowthData, pieData }) {
-  const stats = [
-    { name: 'Total Users', value: '12,345', icon: Users, change: '+12%', trend: 'up' },
-    { name: 'Active Deliveries', value: '256', icon: Truck, change: '+5%', trend: 'up' },
-    { name: 'Revenue', value: '$34,567', icon: CreditCard, change: '+23%', trend: 'up' },
-    { name: 'Issues', value: '3', icon: AlertCircle, change: '-50%', trend: 'down' },
+function OverviewSection() {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const data = await fetchPlatformStats();
+        setStats(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStats();
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  // Sample data for charts (replace with actual data from backend)
+  const deliveryData = [
+    { name: 'Jan', value: 400 },
+    { name: 'Feb', value: 300 },
+    { name: 'Mar', value: 600 },
+    { name: 'Apr', value: 800 },
+    { name: 'May', value: 500 },
+    { name: 'Jun', value: 900 },
+  ];
+
+  const userGrowthData = [
+    { name: 'Jan', users: 100, merchants: 40 },
+    { name: 'Feb', users: 200, merchants: 80 },
+    { name: 'Mar', users: 300, merchants: 120 },
+    { name: 'Apr', users: 400, merchants: 160 },
+    { name: 'May', users: 500, merchants: 200 },
+    { name: 'Jun', users: 600, merchants: 240 },
+  ];
+
+  const pieData = [
+    { name: 'Completed', value: 75, color: 'bg-emerald-500' },
+    { name: 'In Progress', value: 15, color: 'bg-blue-500' },
+    { name: 'Pending', value: 10, color: 'bg-yellow-500' },
   ];
 
   const recentActivities = [
@@ -377,11 +417,19 @@ function OverviewSection({ deliveryData, userGrowthData, pieData }) {
     { id: 4, user: 'Robert Johnson', action: 'reported an issue', time: '3 hours ago', icon: AlertCircle },
   ];
 
+  // Define stats cards using fetched data
+  const statsCards = [
+    { name: 'Total Users', value: stats?.totalUsers || '0', icon: Users, change: '+12%', trend: 'up' },
+    { name: 'Total Merchants', value: stats?.roles?.merchant, icon: CreditCard, change: '+23%', trend: 'up' },
+    { name: 'Total Dsp', value: stats?.roles?.dsp, icon: AlertCircle, change: '-50%', trend: 'down' },
+    { name: 'Active Users', value: stats?.status?.active || '0', icon: Truck, change: '+5%', trend: 'up' },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        {stats.map((stat, index) => (
+        {statsCards.map((stat, index) => (
           <div key={index} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between">
               <div>

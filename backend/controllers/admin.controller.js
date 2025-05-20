@@ -129,9 +129,9 @@ const getPlatformStats = async (req, res) => {
     const rejectedMerchants = await Merchant.countDocuments({ approvalStatus: "rejected" });
 
     // Count DSPs by approvalStatus
-    const approvedDsps = await Dsp.countDocuments({ approvalStatus: "approved" });
-    const pendingDsps = await Dsp.countDocuments({ approvalStatus: "pending" });
-    const rejectedDsps = await Dsp.countDocuments({ approvalStatus: "rejected" });
+    const approvedDsps = await DSP.countDocuments({ approvalStatus: "approved" });
+    const pendingDsps = await DSP.countDocuments({ approvalStatus: "pending" });
+    const rejectedDsps = await DSP.countDocuments({ approvalStatus: "rejected" });
 
     // Send response
     res.json({

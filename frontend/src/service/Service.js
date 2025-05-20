@@ -36,3 +36,13 @@ export const getDeliveryPricing = async () => {
     throw error;
   }
 };
+
+export const fetchPlatformStats = async () => {
+  try {
+    const response = await api.get(`/admin/stats`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching platform stats:', error);
+    throw error; // Re-throw the error to handle it in the component
+  }
+};
