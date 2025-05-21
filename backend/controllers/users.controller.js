@@ -134,6 +134,14 @@ const loginUser = async (req, res) => {
     const isMatch = await user.matchPassword(password);
     if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
+    // Update isActive and lastActive for DSPs
+    if (user.role === "dsp") {
+      await users.findByIdAndUpdate(user._id, {
+        isActive: true,
+        lastActive: new Date()
+      });
+    }
+
     // Sign JWT
     const token = jwt.sign(
       { id: user._id, role: user.role },
@@ -156,6 +164,22 @@ const loginUser = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
+
+// Get all currently active DSPs
+const getActiveDsps = async (req, res) => {
+  try {
+    const activeDsps = await users.find({
+      role: 'dsp',
+      isActive: true
+    }).select('name email isActive');
+    res.json(activeDsps);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+
 
 // const getAllUsers = async (req, res) => {
 //     try {
@@ -213,4 +237,5 @@ module.exports = {
   // updateUser,
   // DeleteUser,
   loginUser,
+  getActiveDsps,
 };

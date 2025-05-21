@@ -1,18 +1,48 @@
-import React from 'react';
-import { Package, PlusCircle, Search, Filter, List, AlertCircle, XCircle, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Package, PlusCircle, Search, Filter, List, AlertCircle, XCircle, X, Menu } from 'lucide-react';
 import StatCard from '../components/Product/StatCard';
 import InventoryTable from '../components/Product/InventoryTable';
 import ItemModal from '../components/Product/ItemModal';
 import { useProduct } from '../hooks/useProduct';
+import Sidebar from '../components/Sidebar';
 
 export default function MerchantInventoryPage() {
   const product = useProduct();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeView, setActiveView] = useState('inventory');
+
+  // Dummy logout handler
+  const handleLogout = () => {
+    // Implement logout logic here
+    alert('Logged out!');
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-indigo-900 text-gray-200 font-sans p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen flex bg-gradient-to-br from-gray-900 via-gray-800 to-indigo-900 text-gray-200 font-sans">
+      {/* Sidebar */}
+      <Sidebar
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+        handleLogout={handleLogout}
+      />
+      {/* Main Content */}
+      <div className="flex-1 p-4 md:p-6 lg:p-8">
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center mb-6">
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 mr-2"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+          <h1 className="text-2xl font-bold text-white flex items-center">
+            <Package className="w-7 h-7 mr-2 text-indigo-400" />
+            Inventory Management
+          </h1>
+        </div>
           <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+          {/* Header (hidden on mobile) */}
+          <div className="hidden md:flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <h1 className="text-3xl font-bold text-white flex items-center">
             <Package className="w-8 h-8 mr-3 text-indigo-400" />
             Inventory Management
@@ -93,6 +123,7 @@ export default function MerchantInventoryPage() {
             categories={product.categories.filter(cat => cat == 'All')}
           />
         )}
+        </div>
       </div>
     </div>
   );

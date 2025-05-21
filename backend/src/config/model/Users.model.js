@@ -35,6 +35,13 @@ const userSchema = new mongoose.Schema(
       enum: ["active", "inactive"],
       default: "active",
     },
+    isActive: {
+      type: Boolean,
+      default: false,
+    },
+    lastActive: {
+      type: Date
+    },
   },
   {
     timestamps: true,

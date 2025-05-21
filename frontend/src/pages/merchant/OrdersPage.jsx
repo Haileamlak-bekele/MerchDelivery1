@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useMerchantOrders } from '../../hooks/useMerchantOrders';
 // import { useInventory } from '../../hooks/useInventory';
+import Sidebar from '../../components/Sidebar';
 import {
   ShoppingCart,
   Clock,
@@ -11,14 +12,23 @@ import {
   XCircle,
   Eye,
   X,
-  AlertCircle
+  AlertCircle,
+  Menu,
+  UserCircle
 } from 'lucide-react';
 
 export default function OrdersPage() {
   const { orders, loading, error, confirmOrder } = useMerchantOrders();
-  const { inventoryItems } = useInventory();
+  // const { inventoryItems } = useInventory();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeView, setActiveView] = useState('orders');
+
+  // Dummy logout handler
+  const handleLogout = () => {
+    alert('Logged out!');
+  };
 
   const handleViewOrder = (order) => {
     setSelectedOrder(order);
@@ -53,6 +63,9 @@ export default function OrdersPage() {
     }
   };
 
+  // Dummy inventoryItems for modal (remove if you have useInventory)
+  const inventoryItems = [];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -76,12 +89,56 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto text-white">
-      <div className="flex items-center mb-8">
+    <div className="min-h-screen flex bg-gradient-to-br from-gray-900 via-gray-800 to-indigo-900 text-gray-200 font-sans">
+      {/* Sidebar */}
+      <Sidebar
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+        handleLogout={handleLogout}
+      />
+      {/* Main Content */}
+      <div className="flex-1 p-4 md:p-6 lg:p-8">
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center mb-6">
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 mr-2"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+          <h1 className="text-2xl font-bold text-white flex items-center">
+            <ShoppingCart className="w-7 h-7 mr-2 text-indigo-400" />
+            Order Management
+          </h1>
+        </div>
+        <div className="max-w-7xl mx-auto">
+          {/* Header (hidden on mobile) */}
+          <div className="hidden md:flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <h1 className="text-3xl font-bold text-white flex items-center">
         <ShoppingCart className="w-8 h-8 mr-3 text-indigo-400" />
-        <h1 className="text-3xl font-bold">Order Management</h1>
+              Order Management
+            </h1>
+          </div>
+          {/* Loading */}
+          {loading && (
+            <div className="flex items-center justify-center h-full py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+            </div>
+          )}
+          {/* Error */}
+          {error && (
+            <div className="text-center py-10">
+              <div className="text-red-500 mb-4">{error}</div>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              >
+                Retry
+              </button>
       </div>
-
+          )}
+          {/* Table Content */}
+          {!loading && !error && (
       <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg shadow-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[700px] text-sm text-left text-gray-300">
@@ -127,7 +184,8 @@ export default function OrdersPage() {
           </table>
         </div>
       </div>
-
+          )}
+          {/* Modal */}
       {isOrderModalOpen && selectedOrder && (
         <OrderDetailsModal
           isOpen={isOrderModalOpen}
@@ -137,6 +195,8 @@ export default function OrdersPage() {
           inventoryItems={inventoryItems}
         />
       )}
+        </div>
+      </div>
     </div>
   );
 }
