@@ -1,6 +1,6 @@
 const User = require("../src/config/model/Users.model.js");
 const Merchant = require("../src/config/model/Merchant.model.js");
-const Dsp = require("../src/config/model/DSP.model.js");
+const DSP = require("../src/config/model/DSP.model.js");
 const DeliveryPriceSettings = require("../src/config/model/DeliveryPricesetting.model.js");
 
 // @desc Get all users
@@ -40,11 +40,34 @@ const getAllMerchants = async (req, res) => {
         };
       })
     );
-
+   
     res.json(merchants);
   } catch (error) {
     console.error('Error fetching merchants:', error);
     res.status(500).json({ message: 'Error fetching merchants', error });
+  }
+};
+
+const getAllDSPs = async (req, res) => {
+  try {
+    // Find all users with merchant role
+    const DspUsers = await User.find({ role: 'dsp' }).select('-password');
+    
+    // Get merchant details for each user
+    const Dsp = await Promise.all(
+      DspUsers.map(async (user) => {
+        const DspDetails = await DSP.findOne({ userId: user._id });
+        return {
+          ...user.toObject(),
+          DspDetails
+        };
+      })
+    );
+
+    res.json(Dsp);
+  } catch (error) {
+    console.error('Error fetching Dsp:', error);
+    res.status(500).json({ message: 'Error fetching Dsp', error });
   }
 };
 
@@ -79,6 +102,13 @@ const setDeliveryPricing = async (req, res) => {
   res.json({ message: "Delivery pricing updated", deliverySettings: settings });
 };
 
+const getDeliveryPricing = async (req, res) => {
+  const settings = await DeliveryPriceSettings.findOne();
+  if (!settings) return res.status(404).json({ message: 'Delivery pricing settings not found' });
+
+  res.json(settings);
+}
+
 // @desc Get platform stats
 const getPlatformStats = async (req, res) => {
   try {
@@ -99,9 +129,73 @@ const getPlatformStats = async (req, res) => {
     const rejectedMerchants = await Merchant.countDocuments({ approvalStatus: "rejected" });
 
     // Count DSPs by approvalStatus
-    const approvedDsps = await Dsp.countDocuments({ approvalStatus: "approved" });
-    const pendingDsps = await Dsp.countDocuments({ approvalStatus: "pending" });
-    const rejectedDsps = await Dsp.countDocuments({ approvalStatus: "rejected" });
+    const approvedDsps = await DSP.countDocuments({ approvalStatus: "approved" });
+    const pendingDsps = await DSP.countDocuments({ approvalStatus: "pending" });
+    const rejectedDsps = await DSP.countDocuments({ approvalStatus: "rejected" });
+
+    // Get registered users by day of the week for the last 7 days
+    const weeklyRegisteredUsers = await User.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: new Date(new Date() - 7 * 24 * 60 * 60 * 1000) } // Last 7 days
+        }
+      },
+      {
+        $group: {
+          _id: { $dayOfWeek: "$createdAt" },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { "_id": 1 }
+      }
+    ]);
+
+    // Get registered users by month for the last year
+    const monthlyRegisteredUsers = await User.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: new Date(new Date() - 365 * 24 * 60 * 60 * 1000) } // Last 365 days
+        }
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { "_id": 1 }
+      }
+    ]);
+
+    // Format the weekly and monthly data
+    const formatWeeklyData = (data) => {
+      const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const formattedData = daysOfWeek.map((day, index) => {
+        const dayData = data.find(item => item._id === index + 1);
+        return {
+          day,
+          count: dayData ? dayData.count : 0
+        };
+      });
+      return formattedData;
+    };
+
+    const formatMonthlyData = (data) => {
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const formattedData = months.map((month, index) => {
+        const monthData = data.find(item => item._id === index + 1);
+        return {
+          month,
+          count: monthData ? monthData.count : 0
+        };
+      });
+      return formattedData;
+    };
+
+    const formattedWeeklyData = formatWeeklyData(weeklyRegisteredUsers);
+    const formattedMonthlyData = formatMonthlyData(monthlyRegisteredUsers);
 
     // Send response
     res.json({
@@ -126,12 +220,18 @@ const getPlatformStats = async (req, res) => {
         pending: pendingDsps,
         rejected: rejectedDsps,
       },
+      registeredUsers: {
+        weekly: formattedWeeklyData,
+        monthly: formattedMonthlyData,
+      },
     });
   } catch (error) {
     console.error("Error fetching platform stats:", error);
     res.status(500).json({ message: "Error fetching platform stats", error });
   }
 };
+
+
 
 // @desc Admin updates approval status (approve/reject merchant/DSP)
 const updateUserStatus = async (req, res) => {
@@ -160,13 +260,13 @@ const updateUserStatus = async (req, res) => {
     return res.json({ message: `Merchant approval status updated to ${status}`, merchant });
   } else if (user.role === "dsp") {
     // Update the approvalStatus in the DSP table
-    const dsp = await Dsp.findOne({ userId: id });
+    const dsp = await DSP.findOne({ userId: id });
     if (!dsp) return res.status(404).json({ message: "DSP not found" });
 
-    dsp.approvalStatus = approvalStatus;
+    dsp.approvalStatus = status;
     await dsp.save();
 
-    return res.json({ message: `DSP approval status updated to ${satisfiestatus}`, dsp });
+    return res.json({ message: `DSP approval status updated `, dsp });
   } else {
     return res.status(400).json({ message: "Can only update status of merchant or dsp" });
   }
@@ -178,7 +278,9 @@ module.exports = {
   getAllUsers,
   getUserById,
   deleteUser,
+  getDeliveryPricing,
   getAllMerchants,
+  getAllDSPs ,
   getPlatformStats,
   updateUserStatus,
   setDeliveryPricing,

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useCustomerShop } from './useCustomerShop';
-import axios from 'axios';
+// import axios from 'axios';
 
 // Helper to get current user from localStorage
 function getCurrentUser() {

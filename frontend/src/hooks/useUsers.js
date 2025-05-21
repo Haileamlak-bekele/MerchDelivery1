@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchUsers, fetchMerchants,updateMerchantStatus } from '../service/User';
+import { fetchUsers, fetchMerchants,updateMerchantStatus, fetchDSP } from '../service/User';
 
 export const useUsers = () => {
   const [users, setUsers] = useState([]);
@@ -14,13 +14,12 @@ export const useUsers = () => {
       setError(null);
       
       // Fetch all data in parallel
-      const [usersData, merchantsData] = await Promise.all([
+      const [usersData, merchantsData,dspUsers] = await Promise.all([
         fetchUsers(),
-        fetchMerchants()
+        fetchMerchants(),
+        fetchDSP()
       ]);
 
-      // Filter DSPs from users
-      const dspUsers = usersData.filter(user => user.role === 'dsp');
       
       setUsers(usersData);
       setMerchants(merchantsData);
