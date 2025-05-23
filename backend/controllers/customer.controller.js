@@ -106,31 +106,34 @@ const viewOrderDetails = async (req, res) => {
 const confirmOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { paymentMethod } = req.body;
+    console.log('orderId:', orderId);
 
     const order = await Order.findById(orderId);
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    // Update order status and payment details
+    // Update order status
     order.orderStatus = 'CONFIRMED';
-    order.paymentDetails = {
-      method: paymentMethod,
-      status: paymentMethod === 'CASH_ON_DELIVERY' ? 'PENDING' : 'COMPLETED'
-    };
+
+    // Ensure paymentDetails exists and set status if needed
+    if (!order.paymentDetails) {
+      order.paymentDetails = { amount: order.totalAmount, status: 'PENDING' };
+    } else {
+      order.paymentDetails.status = 'PENDING'; // or 'COMPLETED'
+    }
 
     // Notify merchant (you can implement your notification logic here)
     order.merchantNotified = true;
-    // TODO: Implement merchant notification logic
 
     await order.save();
     res.status(200).json({ message: 'Order confirmed successfully', order });
   } catch (error) {
+    console.error('Error in confirmOrder:', error); // <--- Add this for debugging
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-
+// Place an order
 const placeOrder = async (req, res) => {
   try {
     const { customerId, items, deliveryLocation, paymentPrice } = req.body;
@@ -175,10 +178,34 @@ const placeOrder = async (req, res) => {
       await item.product.save();
     }
 
+    // Fetch merchant info for each item
+    const itemsWithMerchant = await Promise.all(cartItems.map(async (item) => {
+      let merchantInfo = null;
+      if (item.product.merchantId) {
+        const merchant1 = await merchant.findById(item.product.merchantId);
+        if (merchant1) {
+          merchantInfo = {
+            _id: merchant._id,
+            storeName: merchant1.storeName,
+            location: merchant1.location,
+          };
+        }
+      }
+      return {
+        product: item.product._id,
+        quantity: item.quantity,
+        merchant: merchantInfo,
+      };
+    }));
+
     // Create an order record
     const order = new Order({
       customer: customerId,
-      items: cartItems.map(item => ({ product: item.product._id, quantity: item.quantity })),
+      items: itemsWithMerchant.map(item => ({
+        product: item.product,
+        quantity: item.quantity,
+        merchant: item.merchant, // Attach merchant info to each item
+      })),
       totalAmount: totalAmount,
       deliveryLocation,
       paymentDetails: {
@@ -220,6 +247,49 @@ const removeFromCart = async (req, res) => {
   }
 };
 
+const assignDsp = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { dspId } = req.body;
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    order.dspAssigned = dspId;
+    await order.save();
+
+    res.status(200).json({ message: 'DSP assigned successfully', order });
+  } catch (error) {
+    console.error('Error in assignDsp:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Fetch all orders for a customer
+const getOrdersByCustomerId = async (req, res) => {
+  try {
+    // If using authentication middleware, you can use req.user.id
+    // Otherwise, get from query or params
+    const customerId = req.query.customerId || req.params.customerId || (req.user && req.user.id);
+
+    if (!customerId) {
+      return res.status(400).json({ message: 'Customer ID is required' });
+    }
+
+    const orders = await Order.find({ customer: customerId })
+      .populate('items.product', 'name price merchantId')
+      .populate('items.product.merchantId', 'storeName location')
+      .populate('customer', 'name email phoneNumber')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, orders });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   getAllProducts,
   getProductDetails,
@@ -228,5 +298,7 @@ module.exports = {
   placeOrder,
   viewOrderDetails,
   confirmOrder,
-  removeFromCart
+  removeFromCart,
+  assignDsp,
+  getOrdersByCustomerId,
 };

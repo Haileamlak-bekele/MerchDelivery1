@@ -12,10 +12,10 @@ const merchantSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    location: {
-      type: String,
-      required: true,
-    },
+   location: {
+  lat: { type: Number, required: true },
+  lng: { type: Number, required: true }
+},
     tradeLicense: {
       type: String,
       required: true,

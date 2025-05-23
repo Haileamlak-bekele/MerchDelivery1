@@ -1,30 +1,77 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DSPDashboard = () => {
   const navigation = useNavigation();
 
-  const [activeDelivery, setActiveDelivery] = useState(null);
-  const [incomingDelivery, setIncomingDelivery] = useState({
-    items: '2 Pizzas, 1 Soda',
-    pickup: 'Restaurant A, 123 Main St',
-    dropoff: 'Customer X, 456 Oak Ave',
-    price: '$8.50',
-    distance: '2.5 km',
+  const [orders, setOrders] = useState([]);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        const res = await fetch('http://192.168.217.121:5000/dsp/orders', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        const data = await res.json();
+        if (Array.isArray(data.orders)) {
+          setOrders(data.orders);
+        } else {
+          setOrders([]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch DSP orders:', err);
+        setOrders([]);
+      }
+    };
+    fetchOrders();
+  }, []);
+
+  const handleAccept = (orderId) => {
+    // TODO: POST to backend to update order status to 'SHIPPED'
+    setOrders(prev =>
+      prev.map(order =>
+        order._id === orderId
+          ? { ...order, orderStatus: 'SHIPPED' }
+          : order
+      )
+    );
+  };
+
+  const handleReject = (orderId) => {
+    // Optionally notify backend about rejection
+    setOrders(prev => prev.filter(order => order._id !== orderId));
+  };
+
+ const handleNavigate = (order) => {
+  navigation.navigate('MapScreen', {
+    pickupLocation: order.merchant?.location,
+    dropoffLocation: order.deliveryLocation,
+    customerName: order.customer?.name,
+    customerPhone: order.customer?.phoneNumber,
+    dropoffAddress: order.deliveryLocation?.address,
+    orderId: order._id,
+    items: order.items,
+    totalAmount: order.totalAmount,
+    orderStatus: order.orderStatus,
+    createdAt: order.createdAt,
+    // Add any other fields you want to show
   });
+};
 
-  const handleAccept = () => {
-    setActiveDelivery(incomingDelivery);
-    setIncomingDelivery(null);
+  const formatItems = (items) => {
+    if (!items) return '';
+    return items.map(i => `${i.product?.name || 'Item'} x${i.quantity}`).join(', ');
   };
 
-  const handleReject = () => {
-    setIncomingDelivery(null);
-  };
-   const handleNavigate = () => {
-    navigation.navigate('MapScreen');
-   }
+  // Filter orders by status
+  const activeDeliveries = orders.filter(order => order.orderStatus === 'SHIPPED');
+  const incomingDeliveries = orders.filter(order => order.orderStatus === 'CONFIRMED');
 
   return (
     <View style={styles.container}>
@@ -35,40 +82,44 @@ const DSPDashboard = () => {
           <Text style={styles.profileText}>👤</Text>
         </View>
       </View>
-      
 
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Active Delivery Section */}
-        <Text style={styles.sectionTitle}>Active Delivery</Text>
-        {activeDelivery ? (
-          <View style={styles.deliveryCard}>
-            <Text style={styles.itemTitle}>
-              <Text style={styles.link}>{activeDelivery.items}</Text>
-            </Text>
-            <Text style={styles.info}><Text style={styles.bold}>Pickup:</Text> {activeDelivery.pickup}</Text>
-            <Text style={styles.info}><Text style={styles.bold}>Dropoff:</Text> {activeDelivery.dropoff}</Text>
-
-            <View style={styles.deliveryFooter}>
-              <View>
-                <Text style={styles.price}>{activeDelivery.price}</Text>
-                <Text style={styles.distance}>{activeDelivery.distance}</Text>
+        {/* Active Deliveries */}
+        <Text style={styles.sectionTitle}>Active Deliveries</Text>
+        {activeDeliveries.length > 0 ? (
+          activeDeliveries.map(order => (
+            <View style={styles.deliveryCard} key={order._id}>
+              <Text style={styles.itemTitle}>
+                <Text style={styles.link}>{formatItems(order.items)}</Text>
+              </Text>
+              <Text style={styles.info}>
+  <Text style={styles.bold}>Pickup:</Text>{' '}
+  {order.merchant && order.merchant.location
+    ? `${order.merchant.location.lat}, ${order.merchant.location.lng}`
+    : 'N/A'}
+</Text>
+              <Text style={styles.info}><Text style={styles.bold}>Dropoff:</Text> {order.deliveryLocation ? `${order.deliveryLocation.lat}, ${order.deliveryLocation.lng}` : 'N/A'}</Text>
+              <View style={styles.deliveryFooter}>
+                <View>
+                  <Text style={styles.price}>${order.totalAmount?.toFixed(2) || '0.00'}</Text>
+                </View>
+              </View>
+              <View style={styles.actionButtons}>
+                <TouchableOpacity
+                  style={styles.navButton}
+                  onPress={() => handleNavigate(order)}
+                >
+                  <Text style={styles.buttonText}>🧭 Navigate</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.chatButton} onPress={() => console.log('Chat with Customer')}>
+                  <Text style={styles.buttonText}>💬 Chat</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.confirmButton} onPress={() => console.log('Pickup Confirmed')}>
+                  <Text style={styles.buttonText}>✔ Confirm Pickup</Text>
+                </TouchableOpacity>
               </View>
             </View>
-
-            <View style={styles.actionButtons}>
-              <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('MapScreen')}>
-                <Text style={styles.buttonText}>🧭 Navigate</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.chatButton} onPress={() => console.log('Chat with Customer')}>
-                <Text style={styles.buttonText}>💬 Chat</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.confirmButton} onPress={() => console.log('Pickup Confirmed')}>
-                <Text style={styles.buttonText}>✔ Confirm Pickup</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          ))
         ) : (
           <View style={styles.noDeliveryCard}>
             <Text style={styles.noDeliveryIcon}>📦</Text>
@@ -77,33 +128,37 @@ const DSPDashboard = () => {
           </View>
         )}
 
-        {/* Incoming Delivery Section */}
-        {incomingDelivery && (
+        {/* Incoming Deliveries */}
+        {incomingDeliveries.length > 0 && (
           <>
             <Text style={styles.sectionTitle}>Incoming Deliveries</Text>
-            <View style={styles.deliveryCard}>
-              <Text style={styles.itemTitle}>
-                <Text style={styles.link}>{incomingDelivery.items}</Text>
-              </Text>
-              <Text style={styles.info}><Text style={styles.bold}>Pickup:</Text> {incomingDelivery.pickup}</Text>
-              <Text style={styles.info}><Text style={styles.bold}>Dropoff:</Text> {incomingDelivery.dropoff}</Text>
-
-              <View style={styles.deliveryFooter}>
-                <View>
-                  <Text style={styles.price}>{incomingDelivery.price}</Text>
-                  <Text style={styles.distance}>{incomingDelivery.distance}</Text>
-                </View>
-
-                <View style={styles.buttons}>
-                  <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
-                    <Text style={styles.buttonText}>✓ Accept</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.rejectButton} onPress={handleReject}>
-                    <Text style={styles.buttonText}>✕ Reject</Text>
-                  </TouchableOpacity>
+            {incomingDeliveries.map(order => (
+              <View style={styles.deliveryCard} key={order._id}>
+                <Text style={styles.itemTitle}>
+                  <Text style={styles.link}>{formatItems(order.items)}</Text>
+                </Text>
+               <Text style={styles.info}>
+  <Text style={styles.bold}>Pickup:</Text>{' '}
+  {order.merchant && order.merchant.location
+    ? `${order.merchant.location.lat}, ${order.merchant.location.lng}`
+    : 'N/A'}
+</Text>
+                <Text style={styles.info}><Text style={styles.bold}>Dropoff:</Text> {order.deliveryLocation ? `${order.deliveryLocation.lat}, ${order.deliveryLocation.lng}` : 'N/A'}</Text>
+                <View style={styles.deliveryFooter}>
+                  <View>
+                    <Text style={styles.price}>${order.totalAmount?.toFixed(2) || '0.00'}</Text>
+                  </View>
+                  <View style={styles.buttons}>
+                    <TouchableOpacity style={styles.acceptButton} onPress={() => handleAccept(order._id)}>
+                      <Text style={styles.buttonText}>✓ Accept</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.rejectButton} onPress={() => handleReject(order._id)}>
+                      <Text style={styles.buttonText}>✕ Reject</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
-            </View>
+            ))}
           </>
         )}
       </ScrollView>
@@ -112,6 +167,8 @@ const DSPDashboard = () => {
 };
 
 export default DSPDashboard;
+
+// ...styles unchanged...
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f6f9fc' },

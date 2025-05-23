@@ -15,7 +15,7 @@ const LoginScreen = ({ navigation }) => {
 
     setLoading(true); // Show loading indicator
     try {
-      const res = await fetch('http://192.168.104.121:5000/users/login', { // Use 10.0.2.2 for Android emulator
+      const res = await fetch('http://192.168.217.121:5000/users/login', { // Use 10.0.2.2 for Android emulator
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

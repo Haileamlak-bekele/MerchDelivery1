@@ -31,7 +31,8 @@ export function useMerchantOrders() {
     setLoading(true);
     setError(null);
     try {
-      await axios.patch(`${API_BASE_URL}/merchant/orders/${orderId}/confirm`, {}, {
+      await axios.post(`${API_BASE_URL}/orders/${orderId}/confirm`, {}, {
+        
         headers: { Authorization: `Bearer ${getAuthToken()}` }
       });
       await fetchOrders();

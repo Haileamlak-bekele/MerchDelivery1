@@ -17,16 +17,26 @@ const orderSchema = new Schema({
       type: Number,
       required: true,
       min: 1
+    },
+    // Add merchant info per item (optional, for redundancy and fast lookup)
+    merchant: {
+      _id: { type: Schema.Types.ObjectId, 
+        ref: 'Merchant' },
+      storeName: String,
+      location: {
+        lat: Number,
+        lng: Number
+      }
     }
   }],
   totalAmount: {
     type: Number,
     required: true
   },
- deliveryLocation: {
+  deliveryLocation: {
     lat: { type: Number, required: true },
     lng: { type: Number, required: true }
-},
+  },
   paymentDetails: {
     amount: {
       type: Number,
@@ -42,7 +52,12 @@ const orderSchema = new Schema({
     type: String,
     enum: ['PENDING', 'CONFIRMED', 'DELIVERED', 'CANCELLED'],
     default: 'PENDING'
+  },
+  dspAssigned: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Order', orderSchema); 
+module.exports = mongoose.model('Order', orderSchema);

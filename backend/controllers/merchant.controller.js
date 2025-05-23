@@ -21,6 +21,7 @@ const viewAllOrders = async (req, res) => {
         })
         .populate('customer', 'name email phoneNumber')
         .populate('items.product', 'name price merchantId')
+        .populate('dspAssigned', 'name email phoneNumber')
         .populate('items.product.merchantId', 'storeName location');
 
         // Filter orders to only include items from this merchant

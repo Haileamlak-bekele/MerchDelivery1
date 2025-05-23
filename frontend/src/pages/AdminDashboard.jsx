@@ -783,6 +783,7 @@ function MerchantSection() {
     setSelectedMerchant(merchant);
     setIsModalOpen(true);
   };
+  console.log(selectedMerchant);
 
   const closeModal = () => {
     setIsModalOpen(false);

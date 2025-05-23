@@ -165,9 +165,13 @@ const MerchantDetailModal = ({ merchant, isOpen, onClose, onStatusUpdate }) => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Location</p>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                        {merchant.merchantDetails?.location}
-                      </p>
+                    {merchant.merchantDetails?.location && (
+  <p>
+    Location: 
+    Lat: {merchant.merchantDetails.location.lat}, 
+    Lng: {merchant.merchantDetails.location.lng}
+  </p>
+)}
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>

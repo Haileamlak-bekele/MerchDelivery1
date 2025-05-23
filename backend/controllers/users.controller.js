@@ -27,7 +27,7 @@ const addUser = async (req, res) => {
         role,
         phoneNumber,
         storeName,
-        location,
+        location, // Expecting location as { lat, lng } or as stringified JSON
         vehicleDetails,
     } = req.body;
 
@@ -64,10 +64,31 @@ const addUser = async (req, res) => {
 
             // If the role is 'merchant', create the merchant record
             if (role === "merchant") {
+                // Parse location if sent as JSON string
+                let merchantLocation = location;
+                if (typeof location === "string") {
+                    try {
+                        merchantLocation = JSON.parse(location);
+                    } catch (e) {
+                        return res.status(400).json({ message: "Invalid location format. Should be an object with lat and lng." });
+                    }
+                }
+                // Validate lat/lng
+                if (
+                    !merchantLocation ||
+                    typeof merchantLocation.lat !== "number" ||
+                    typeof merchantLocation.lng !== "number"
+                ) {
+                    return res.status(400).json({ message: "Merchant location must include numeric lat and lng." });
+                }
+
                 const newMerchant = new merchant({
                     userId: savedUser._id,
                     storeName,
-                    location,
+                    location: {
+                        lat: merchantLocation.lat,
+                        lng: merchantLocation.lng
+                    },
                     tradeLicense,
                 });
 
@@ -76,11 +97,11 @@ const addUser = async (req, res) => {
 
             // If the role is 'dsp', create the dsp record
             if (role === "dsp") {
-              const newDsp = new dsp({
-                userId: savedUser._id,
-                vehicleDetails, // just the string
-                drivingLicense,
-            });
+                const newDsp = new dsp({
+                    userId: savedUser._id,
+                    vehicleDetails,
+                    drivingLicense,
+                });
                 await newDsp.save();
             }
         } catch (error) {
@@ -111,7 +132,6 @@ const addUser = async (req, res) => {
         res.status(500).json({ message: "Server error", error: err.message });
     }
 };
-
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 

@@ -3,6 +3,7 @@ import { Star, Heart, X, MessageSquare, Filter, ChevronDown, ChevronUp, Shopping
 import { useCustomerShop } from '../hooks/useCustomerShop';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
+import CustomerTrackingOrders from '../components/CustomerTrackingPage';
 
 // --- Constants ---
 const TAX_RATE = 0.15; // 15% Tax Rate
@@ -11,6 +12,7 @@ const PAGES = { // Define page constants for navigation
     DEALS: 'deals',
     NEW_ARRIVALS: 'newArrivals',
     SUPPORT: 'support',
+    MY_ORDERS: 'myOrders',
 };
 
 // --- Helper Functions ---
@@ -325,6 +327,8 @@ export function CustomersPage() {
         return <NewArrivalsPage />;
       case PAGES.SUPPORT:
         return <SupportPage />;
+        case PAGES.MY_ORDERS:
+         return <CustomerTrackingOrders/>; 
       default:
         return <p>Page not found.</p>;
     }
@@ -457,6 +461,12 @@ function Header({ cartItemCount, onCartClick, onUserClick, onNavigate, currentPa
             >
                 Support
             </button>
+            <button 
+               onClick={()=>onNavigate(PAGES.MY_ORDERS)}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isNavLinkActive(PAGES.MY_ORDERS) ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400'}`}
+                >
+                  My Orders
+                </button>
           </div>
 
           {/* Right Side Icons */}
@@ -1036,4 +1046,13 @@ function SupportPage() {
             {/* Add FAQs, contact form, etc. */}
         </div>
     );
+}
+
+function MyOrdersPage() {
+  return (
+    <div className="text-center py-10">
+      <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">My Orders</h2>
+      <p className="text-gray-600 dark:text-gray-400">You have not placed any orders yet.</p>
+    </div>
+  );
 }
