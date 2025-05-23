@@ -349,11 +349,10 @@ function App() {
         <div className="flex flex-1 h-screen">
           {/* Map placeholder */}
           <div className="w-full md:w-1/2 flex items-center justify-center bg-gray-200 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-700">
-            <div className="w-11/12 h-80 md:h-[80%] bg-white dark:bg-gray-900 rounded-xl flex items-center justify-center shadow-inner border border-dashed border-emerald-400">
-              <span className="text-emerald-600 dark:text-emerald-300 text-lg font-semibold">
-                Map will be rendered here
-              </span>
-            </div>
+             <OrderMapView
+              customerLocation={selectedOrder.customerLocation}
+              merchantLocation={selectedOrder.dsp?.location}
+            />
           </div>
           {/* Order details */}
           <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-6">
