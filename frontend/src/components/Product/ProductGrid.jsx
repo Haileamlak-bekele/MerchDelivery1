@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Heart, Star } from 'lucide-react';
+import { ShoppingCart, Heart, Star, X } from 'lucide-react';
 import { API_BASE_URL } from '../../config';
 
 // Helper to render rating stars
@@ -113,21 +113,77 @@ function ProductCard({ product, onSelect, onSaveToggle, isSaved, onAddToCart }) 
 }
 
 export default function ProductGrid({ products, onProductSelect, onSaveToggle, savedItems, onAddToCart }) {
+  const [modalProduct, setModalProduct] = useState(null);
+
+  const handleCardSelect = (product) => {
+    setModalProduct(product);
+    if (onProductSelect) onProductSelect(product);
+  };
+  const closeModal = () => setModalProduct(null);
+
   if (!products || products.length === 0) {
     return <p className="text-center text-gray-500 dark:text-gray-400 mt-10">No products found matching your criteria.</p>;
   }
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-      {products.map(product => (
-        <ProductCard
-          key={product.id}
-          product={product}
-          onSelect={onProductSelect}
-          onSaveToggle={onSaveToggle}
-          isSaved={savedItems.has(product.id)}
-          onAddToCart={onAddToCart}
-        />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+        {products.map(product => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            onSelect={handleCardSelect}
+            onSaveToggle={onSaveToggle}
+            isSaved={savedItems.has(product.id)}
+            onAddToCart={onAddToCart}
+          />
+        ))}
+      </div>
+      {modalProduct && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300"
+          style={{
+            background: 'rgba(16, 24, 40, 0.65)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+            animation: 'fadeInOverlay 0.3s',
+          }}
+        >
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-0 relative overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-emerald-600 dark:bg-emerald-800">
+              <h3 className="text-lg font-bold text-white">Product Details</h3>
+              <button
+                onClick={closeModal}
+                className="text-white hover:text-gray-200 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                aria-label="Close"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6 flex flex-col items-center gap-4">
+              <img
+                src={getImageUrl(modalProduct.image)}
+                alt={modalProduct.name}
+                className="w-48 h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700 mb-2"
+                onError={e => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x400/f3f4f6/9ca3af?text=Not+Found'; }}
+              />
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">{modalProduct.name}</h2>
+              <p className="text-md text-emerald-700 dark:text-emerald-400 font-semibold mb-1">${typeof modalProduct.price === 'number' ? modalProduct.price.toFixed(2) : '0.00'}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Category: {modalProduct.category}</p>
+              <div className="mb-2">{renderRatingStars(modalProduct.rating)}</div>
+              <p className="text-sm text-gray-700 dark:text-gray-300 text-center">{modalProduct.description || 'No description available.'}</p>
+            </div>
+          </div>
+        </div>
+      )}
+      <style jsx global>{`
+        @keyframes heartPop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
+        .animate-heart-pop { animation: heartPop 0.3s ease-in-out; }
+        @keyframes fadeInOverlay {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}</style>
+    </>
   );
 } 

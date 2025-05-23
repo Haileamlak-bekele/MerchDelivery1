@@ -194,7 +194,15 @@ export default function ProfilePage() {
             )}
             {/* Transaction Details Modal */}
             {modalTx && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300"
+                style={{
+                  background: 'rgba(16, 24, 40, 0.65)',
+                  backdropFilter: 'blur(6px)',
+                  WebkitBackdropFilter: 'blur(6px)',
+                  animation: 'fadeInOverlay 0.3s',
+                }}
+              >
                 <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full p-0 relative overflow-hidden">
                   {/* Modal Header */}
                   <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-indigo-600 dark:bg-indigo-800">
@@ -253,6 +261,12 @@ export default function ProfilePage() {
           {/* Add more profile info here if needed */}
         </div>
       </div>
+      <style jsx global>{`
+        @keyframes fadeInOverlay {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 } 
