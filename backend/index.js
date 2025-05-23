@@ -1,12 +1,10 @@
-// import express from "express";
-// import dotenv from "dotenv";
-// import dbConnect from "./src/config/dbConnect.js";
-// import router from "./routes/user.routes.js";
-
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const path = require("path");
+const http = require("http"); // <-- Add this
+const { Server } = require("socket.io"); // <-- Add this
+
 const dbConnect = require("./src/config/dbConnect.js");
 const userRoutes = require("./routes/user.routes.js");
 const AdminRoutes = require("./routes/admin.routes.js");
@@ -19,21 +17,31 @@ dotenv.config();
 dbConnect();
 
 const app = express();
-
 const port = process.env.PORT;
+
+// Create HTTP server and attach Socket.IO
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+  }
+});
 
 // Allow requests from your frontend
 app.use(cors({
-  origin: 'http://localhost:5173', // Allow the frontend from port 5173
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow these methods
-  credentials: true // If you're using cookies or sessions, include credentials
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
 }));
 
 //middleware
 app.use(express.json());
 app.use((req, res, next) => {
   console.log('Request body:', req.body);
-  next();});
+  next();
+});
 app.use(express.urlencoded({ extended: false }));
 
 // Serve static files from the uploads directory
@@ -47,6 +55,31 @@ app.use("/dsp", dspRoutes);
 app.use("/customers", customersRoutes);
 app.use("/orders", orderRoutes);
 
-app.listen(port, () => {
+// --- SOCKET.IO LOGIC HERE ---
+app.set('io', io); // Make io available in the app
+io.on('connection', (socket) => {
+  console.log('WebSocket client connected:', socket.id);
+
+  // Example: Customer subscribes to order location updates
+  socket.on('trackOrder', (orderId) => {
+    socket.join(orderId);
+  });
+
+  // Example: DSP location update (emit to customers)
+  socket.on('dspLocationUpdate', ({ orderId, lat, lng }) => {
+    io.to(orderId).emit('order-location-update', { lat, lng });
+  });
+
+  io.on('connection', (socket) => {
+  console.log('A client connected:', socket.id);
+});
+
+  socket.on('disconnect', () => {
+    console.log('WebSocket client disconnected:', socket.id);
+  });
+});
+
+// Start server (use server.listen, not app.listen)
+server.listen(port, () => {
   console.log(`Server is running on port:${port}`);
 });

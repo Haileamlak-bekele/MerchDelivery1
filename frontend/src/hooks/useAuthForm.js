@@ -220,7 +220,17 @@ export const useAuthForm = () => {
                 response = await axios.post(`${API_BASE_URL}/users/add`, formDataToSend, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-            }
+            }else if (selectedRole === ROLES.CUSTOMER) {
+    response = await axios.post(`${API_BASE_URL}/users/add`, {
+        name: formData.name,
+        email: formData.email,
+        phoneNumber: formData.phone,
+        password: formData.password,
+        role: selectedRole
+    }, {
+        headers: { 'Content-Type': 'application/json' }
+    });
+}
 
             if (response.data) {
                 // Navigate to success page with role information

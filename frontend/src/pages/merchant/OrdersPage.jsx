@@ -270,7 +270,14 @@ function OrderDetailsModal({ isOpen, onClose, order, onConfirm, inventoryItems, 
               <h4 className="text-lg font-semibold text-indigo-300 mb-2">Order Summary</h4>
               <p><strong className="text-gray-400">Status:</strong> {order.orderStatus}</p>
               <p><strong className="text-gray-400">Total Amount:</strong> ${order.totalAmount.toFixed(2)}</p>
-              {order.dspAssigned && <p><strong className="text-gray-400">DSP Assigned:</strong> {order.dspAssigned}</p>}
+             {order.dspAssigned && (
+  <p>
+    <strong className="text-gray-400">DSP Assigned:</strong>{" "}
+    {typeof order.dspAssigned === "object"
+      ? `${order.dspAssigned.name} (${order.dspAssigned.email})`
+      : order.dspAssigned}
+  </p>
+)}
             </div>
           </div>
 

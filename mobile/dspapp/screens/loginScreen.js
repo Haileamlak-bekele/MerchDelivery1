@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LoginScreen = ({ navigation }) => {
@@ -13,9 +13,9 @@ const LoginScreen = ({ navigation }) => {
       return;
     }
 
-    setLoading(true); // Show loading indicator
+    setLoading(true);
     try {
-      const res = await fetch('http://192.168.217.121:5000/users/login', { // Use 10.0.2.2 for Android emulator
+      const res = await fetch('http://192.168.217.121:5000/users/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -24,11 +24,9 @@ const LoginScreen = ({ navigation }) => {
       const data = await res.json();
 
       if (res.ok) {
-        // Store the token in AsyncStorage
         await AsyncStorage.setItem('token', data.token);
-        await AsyncStorage.setItem('userId', data.user.id); // Store userId for location tracking
+        await AsyncStorage.setItem('userId', data.user.id);
 
-        // Navigate to the Home screen
         navigation.reset({
           index: 0,
           routes: [{ name: 'Home' }],
@@ -39,33 +37,39 @@ const LoginScreen = ({ navigation }) => {
     } catch (err) {
       Alert.alert('Error', 'Unable to connect to the server. Please try again later.');
     } finally {
-      setLoading(false); // Hide loading indicator
+      setLoading(false);
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>DSP Login</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
-      ) : (
-        <Button title="Login" onPress={handleLogin} />
-      )}
+      <View style={styles.card}>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          placeholderTextColor="#888"
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          placeholderTextColor="#888"
+        />
+        {loading ? (
+          <ActivityIndicator size="large" color="#10b981" style={{ marginTop: 16 }} />
+        ) : (
+          <TouchableOpacity style={styles.button} onPress={handleLogin}>
+            <Text style={styles.buttonText}>Login</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 };
@@ -73,13 +77,46 @@ const LoginScreen = ({ navigation }) => {
 export default LoginScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 20 },
-  title: { fontSize: 24, marginBottom: 20, textAlign: 'center' },
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f4f8' },
+  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 30, color: '#10b981', letterSpacing: 1 },
+  card: {
+    width: '100%',
+    maxWidth: 350,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
   input: {
     borderWidth: 1,
-    padding: 10,
-    marginBottom: 15,
-    borderRadius: 5,
-    borderColor: '#ccc',
+    borderColor: '#e5e7eb',
+    padding: 12,
+    marginBottom: 18,
+    borderRadius: 8,
+    fontSize: 16,
+    backgroundColor: '#f9fafb',
+    color: '#222',
+  },
+  button: {
+    backgroundColor: '#10b981',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: '#10b981',
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 17,
+    letterSpacing: 1,
   },
 });

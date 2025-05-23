@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import BottomNavbar from '../components/buttomNav';
+import LocationTracker from '../components/locationTracker'; // Assuming you have a location tracking component
 
 const DSPDashboard = () => {
   const navigation = useNavigation();
@@ -162,8 +164,12 @@ const DSPDashboard = () => {
           </>
         )}
       </ScrollView>
+      {/* <LocationTracker /> */}
+      <BottomNavbar />
     </View>
+    
   );
+  
 };
 
 export default DSPDashboard;

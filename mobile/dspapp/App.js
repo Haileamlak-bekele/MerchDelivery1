@@ -19,7 +19,6 @@ export default function App() {
         <Stack.Screen name="MapScreen" component={MapScreen} />
       </Stack.Navigator>
       <LocationTracker />
-      <BottomNavbar />
     </NavigationContainer>
     
     

@@ -26,8 +26,8 @@ const LocationTracker = () => {
       locationSubscription.current = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
-          timeInterval: 10000,
-          distanceInterval: 20,
+          timeInterval: 1000,
+          distanceInterval: 0,
         },
         (location) => {
           if (!isMounted) return;
