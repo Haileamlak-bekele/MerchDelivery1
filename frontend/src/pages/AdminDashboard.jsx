@@ -34,6 +34,7 @@ import DSPDetailModal from '../components/DSPDetailModal';
 import { useUsers } from '../hooks/useUsers';
 import DeliveryPriceSection from '../components/DeliveryPriceSection';
 import { fetchPlatformStats } from '../service/Service';
+import { deleteUsers } from '../service/User';
 
 // Main App component
 export default function App() {
@@ -359,7 +360,7 @@ function AdminDashboard({ darkMode, setDarkMode }) {
 // --- Section Components ---
 
 // Overview Section Component
-
+// eslint-disable-next-line no-unused-vars
 function OverviewSection() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -383,47 +384,45 @@ function OverviewSection() {
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
-  // Sample data for charts (replace with actual data from backend)
-  const deliveryData = [
-    { name: 'Jan', value: 400 },
-    { name: 'Feb', value: 300 },
-    { name: 'Mar', value: 600 },
-    { name: 'Apr', value: 800 },
-    { name: 'May', value: 500 },
-    { name: 'Jun', value: 900 },
+  const userGrowthData = [
+    { name: 'Jan', users: stats.registeredUsers.monthly.find(item => item.month === 'January')?.count || 0 },
+    { name: 'Feb', users: stats.registeredUsers.monthly.find(item => item.month === 'February')?.count || 0 },
+    { name: 'Mar', users: stats.registeredUsers.monthly.find(item => item.month === 'March')?.count || 0 },
+    { name: 'Apr', users: stats.registeredUsers.monthly.find(item => item.month === 'April')?.count || 0 },
+    { name: 'May', users: stats.registeredUsers.monthly.find(item => item.month === 'May')?.count || 0 },
+    { name: 'Jun', users: stats.registeredUsers.monthly.find(item => item.month === 'June')?.count || 0 },
+    { name: 'Jul', users: stats.registeredUsers.monthly.find(item => item.month === 'July')?.count || 0 },
+    { name: 'Aug', users: stats.registeredUsers.monthly.find(item => item.month === 'August')?.count || 0 },
+    { name: 'Sep', users: stats.registeredUsers.monthly.find(item => item.month === 'September')?.count || 0 },
+    { name: 'Oct', users: stats.registeredUsers.monthly.find(item => item.month === 'October')?.count || 0 },
+    { name: 'Nov', users: stats.registeredUsers.monthly.find(item => item.month === 'November')?.count || 0 },
+    { name: 'Dec', users: stats.registeredUsers.monthly.find(item => item.month === 'December')?.count || 0 },
   ];
 
- const userGrowthData = [
-  { name: 'Jan', users: stats.registeredUsers.monthly.find(item => item.month === 'January')?.count || 0 },
-  { name: 'Feb', users: stats.registeredUsers.monthly.find(item => item.month === 'February')?.count || 0 },
-  { name: 'Mar', users: stats.registeredUsers.monthly.find(item => item.month === 'March')?.count || 0 },
-  { name: 'Apr', users: stats.registeredUsers.monthly.find(item => item.month === 'April')?.count || 0 },
-  { name: 'May', users: stats.registeredUsers.monthly.find(item => item.month === 'May')?.count || 0 },
-  { name: 'Jun', users: stats.registeredUsers.monthly.find(item => item.month === 'June')?.count || 0 },
-  // Add more months as needed
-];
+  const { total, completed, inProgress, pending } = stats.orders;
+
+  const completedPercentage = (completed / total) * 100;
+  const inProgressPercentage = (inProgress / total) * 100;
+  const pendingPercentage = (pending / total) * 100;
+
+  const completedPercentageRounded = Math.round(completedPercentage * 100) / 100;
+  const inProgressPercentageRounded = Math.round(inProgressPercentage * 100) / 100;
+  const pendingPercentageRounded = Math.round(pendingPercentage * 100) / 100;
 
   const pieData = [
-    { name: 'Completed', value: 75 },
-    { name: 'In Progress', value: 15 },
-    { name: 'Pending', value: 10 },
+    { name: 'Completed', value: completedPercentageRounded },
+    { name: 'In Progress', value: inProgressPercentageRounded },
+    { name: 'Pending', value: pendingPercentageRounded },
   ];
 
   const COLORS = ['#00C49F', '#0088FE', '#FFBB28', '#FF8042', '#8884D8'];
 
-  const recentActivities = [
-    { id: 1, user: 'John Doe', action: 'placed a new order', time: '2 minutes ago', icon: ShoppingCart },
-    { id: 2, user: 'Jane Smith', action: 'registered as a merchant', time: '15 minutes ago', icon: Users },
-    { id: 3, user: 'System', action: 'completed scheduled maintenance', time: '1 hour ago', icon: Server },
-    { id: 4, user: 'Robert Johnson', action: 'reported an issue', time: '3 hours ago', icon: AlertCircle },
-  ];
-
   // Define stats cards using fetched data
   const statsCards = [
     { name: 'Total Users', value: stats?.totalUsers || '0', icon: Users, change: '+12%', trend: 'up' },
-    { name: 'Active Deliveries', value: stats?.status?.active || '0', icon: Truck, change: '+5%', trend: 'up' },
-    { name: 'Revenue', value: '$34,567', icon: CreditCard, change: '+23%', trend: 'up' },
-    { name: 'Issues', value: '3', icon: AlertCircle, change: '-50%', trend: 'down' },
+    { name: 'Total Merchant', value: stats?.roles?.merchant || '0', icon: Users, change: '+5%', trend: 'up' },
+    { name: 'Total Dsp', value: stats?.roles?.dsp, icon: Users, change: '+23%', trend: 'up' },
+    { name: 'Total Orders', value: stats?.orders?.total, icon: Users, change: '+23%', trend: 'up' },
   ];
 
   return (
@@ -437,16 +436,8 @@ function OverviewSection() {
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{stat.name}</p>
                 <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{stat.value}</p>
                 <div className={`flex items-center mt-2 ${stat.trend === 'up' ? 'text-emerald-500' : 'text-red-500'}`}>
-                  {stat.trend === 'up' ? (
-                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M12 7a1 1 0 01-1-1V5.414l-4.293 4.293a1 1 0 01-1.414-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L13 5.414V6a1 1 0 01-1 1z" clipRule="evenodd" />
-                    </svg>
-                  ) : (
-                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M12 13a1 1 0 100-2H5.414l4.293-4.293a1 1 0 00-1.414-1.414l-6 6a1 1 0 000 1.414l6 6a1 1 0 001.414-1.414L5.414 13H12z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                  <span className="text-xs font-medium ml-1">{stat.change}</span>
+                  <stat.icon className="h-4 w-4 mr-1" />
+                  <span className="text-xs">{stat.change}</span>
                 </div>
               </div>
               <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500">
@@ -455,66 +446,6 @@ function OverviewSection() {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-        {/* Delivery Chart */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Delivery Performance</h3>
-            <div className="flex items-center space-x-2">
-              <button className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600">
-                Monthly
-              </button>
-              <button className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600">
-                Weekly
-              </button>
-              <button className="text-xs px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-md text-emerald-600 dark:text-emerald-400">
-                Daily
-              </button>
-            </div>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={deliveryData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Area type="monotone" dataKey="value" stroke="#8884d8" fill="#8884d8" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Pie Chart */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Delivery Status</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" labelLine={false} outerRadius={80} fill="#8884d8" dataKey="value">
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-4 space-y-2">
-            {pieData.map((item, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className={`h-3 w-3 rounded-full ${COLORS[index % COLORS.length]} mr-2`}></div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">{item.name}</span>
-                </div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">{item.value}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* User Growth Chart */}
@@ -539,26 +470,29 @@ function OverviewSection() {
         </div>
       </div>
 
-      {/* Recent Activity */}
+      {/* Pie Chart */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
-          <button className="text-sm text-emerald-500 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300">
-            View all
-          </button>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Delivery Status</h3>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={pieData} cx="50%" cy="50%" labelLine={false} outerRadius={80} fill="#8884d8" dataKey="value">
+                {pieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
-        <div className="space-y-4">
-          {recentActivities.map((activity) => (
-            <div key={activity.id} className="flex items-start">
-              <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 mr-3">
-                <activity.icon className="h-5 w-5" />
+        <div className="mt-4 space-y-2">
+          {pieData.map((item, index) => (
+            <div key={index} className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="h-3 w-3 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                <span className="text-sm text-gray-600 dark:text-gray-300">{item.name}</span>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  <span className="font-semibold">{activity.user}</span> {activity.action}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activity.time}</p>
-              </div>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">{item.value}%</span>
             </div>
           ))}
         </div>
@@ -568,30 +502,54 @@ function OverviewSection() {
 }
 
 
+
 // Users Section Component
 function UsersSection() {
-  const users = [
-    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Customer', status: 'active', lastLogin: '2 hours ago' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'Merchant', status: 'active', lastLogin: '1 day ago' },
-    { id: 3, name: 'Robert Johnson', email: 'robert@example.com', role: 'DSP', status: 'pending', lastLogin: 'Never' },
-    { id: 4, name: 'Emily Davis', email: 'emily@example.com', role: 'Customer', status: 'active', lastLogin: '30 minutes ago' },
-    { id: 5, name: 'Michael Wilson', email: 'michael@example.com', role: 'Merchant', status: 'suspended', lastLogin: '1 week ago' },
-  ];
+  const { getFilteredUsers, setFilter, refresh } = useUsers();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 2; // Number of items to display per page
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+    setFilter({ name: event.target.value, status: statusFilter === 'All' ? null : statusFilter });
+    setCurrentPage(1); // Reset to the first page when search term changes
+  };
+
+  const handleStatusChange = (event) => {
+    const status = event.target.value === 'All' ? null : event.target.value;
+    setStatusFilter(event.target.value);
+    setFilter({ name: searchTerm, status: status });
+    setCurrentPage(1); // Reset to the first page when status filter changes
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteUsers(id);
+      refresh();
+    } catch (error) {
+      console.error("Failed to delete the user:", error);
+    }
+  };
+
+  const users = getFilteredUsers();
+
+  // Calculate the index of the first and last item to display on the current page
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = users.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Calculate the total number of pages
+  const totalPages = Math.ceil(users.length / itemsPerPage);
+
+  // Function to handle page changes
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h2>
-        <div className="flex space-x-3">
-          <button className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 flex items-center">
-            <Plus className="h-4 w-4 mr-2" />
-            Add User
-          </button>
-          <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </button>
-        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -603,12 +561,18 @@ function UsersSection() {
             <input
               type="text"
               placeholder="Search users..."
+              value={searchTerm}
+              onChange={handleSearchChange}
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition duration-150"
             />
           </div>
           <div className="ml-4 flex items-center">
             <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">Status:</span>
-            <select className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-white dark:bg-gray-700">
+            <select
+              value={statusFilter}
+              onChange={handleStatusChange}
+              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-white dark:bg-gray-700"
+            >
               <option>All</option>
               <option>Active</option>
               <option>Pending</option>
@@ -633,16 +597,13 @@ function UsersSection() {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Status
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Last Login
-                </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {users.map((user) => (
+              {currentItems.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -673,12 +634,8 @@ function UsersSection() {
                       {user.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.lastLogin}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 mr-3">
-                      Edit
-                    </button>
-                    <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
+                    <button onClick={() => handleDelete(user._id)} className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
                       Delete
                     </button>
                   </td>
@@ -690,19 +647,30 @@ function UsersSection() {
 
         <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            Showing <span className="font-medium">1</span> to <span className="font-medium">5</span> of <span className="font-medium">24</span> results
+            Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to <span className="font-medium">{Math.min(indexOfLastItem, users.length)}</span> of <span className="font-medium">{users.length}</span> results
           </div>
           <div className="flex space-x-2">
-            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+            <button
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+            >
               Previous
             </button>
-            <button className="px-3 py-1 border border-emerald-500 bg-emerald-500 text-white rounded-md hover:bg-emerald-600">
-              1
-            </button>
-            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-              2
-            </button>
-            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+            {Array.from({ length: totalPages }, (_, index) => (
+              <button
+                key={index + 1}
+                onClick={() => paginate(index + 1)}
+                className={`px-3 py-1 border rounded-md ${currentPage === index + 1 ? 'border-emerald-500 bg-emerald-500 text-white hover:bg-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+              >
+                {index + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+            >
               Next
             </button>
           </div>
@@ -711,6 +679,7 @@ function UsersSection() {
     </div>
   );
 }
+
 
 // Deliveries Section Component
 // Deliveries Section Component
@@ -773,23 +742,54 @@ function DeliveriesSection() {
 }
 
 function MerchantSection() {
-   
-  const { merchants} = useUsers();
-
-   const [selectedMerchant, setSelectedMerchant] = useState(null);
+  const { getFilteredMerchants, setFilter, refresh } = useUsers();
+  const [selectedMerchant, setSelectedMerchant] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
- 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // Number of items to display per page
+
   const openModal = (merchant) => {
     setSelectedMerchant(merchant);
     setIsModalOpen(true);
   };
-  console.log(selectedMerchant);
 
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedMerchant(null);
   };
 
+  const handleDelete = async (id) => {
+    try {
+      await deleteUsers(id);
+      refresh(); // Refresh the list of merchants after deletion
+    } catch (error) {
+      console.error("Failed to delete the merchant:", error);
+    }
+  };
+
+  const handleSearchChange = (event) => {
+    setFilter({ name: event.target.value, status: null });
+    setCurrentPage(1); // Reset to the first page when search term changes
+  };
+
+  const handleStatusChange = (event) => {
+    const status = event.target.value === 'All' ? null : event.target.value;
+    setFilter({ name: '', status: status });
+    setCurrentPage(1); // Reset to the first page when status filter changes
+  };
+
+  const merchants = getFilteredMerchants();
+
+  // Calculate the index of the first and last item to display on the current page
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = merchants.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Calculate the total number of pages
+  const totalPages = Math.ceil(merchants.length / itemsPerPage);
+
+  // Function to handle page changes
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <div className="space-y-6">
@@ -806,15 +806,19 @@ function MerchantSection() {
             <input
               type="text"
               placeholder="Search Merchants..."
+              onChange={handleSearchChange}
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition duration-150"
             />
           </div>
           <div className="ml-4 flex items-center">
             <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">Status:</span>
-            <select className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-white dark:bg-gray-700">
+            <select
+              onChange={handleStatusChange}
+              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-white dark:bg-gray-700"
+            >
               <option>All</option>
               <option>Approved</option>
-              <option>Pending</option>
+              <option>pending</option>
               <option>Suspended</option>
             </select>
           </div>
@@ -828,12 +832,11 @@ function MerchantSection() {
                   Name
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Buisness Name
+                  Business Name
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Email
                 </th>
-
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Status
                 </th>
@@ -843,7 +846,7 @@ function MerchantSection() {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {merchants.map((user) => (
+              {currentItems.map((user) => (
                 <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -855,7 +858,7 @@ function MerchantSection() {
                       </div>
                     </div>
                   </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300">
                         {user.merchantDetails?.storeName.charAt(0)}
@@ -876,8 +879,8 @@ function MerchantSection() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                     <button onClick={() => openModal(user)}>View Details</button>
-                     <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
+                    <button onClick={() => openModal(user)}>View Details</button>
+                    <button onClick={() => handleDelete(user._id)} className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
                       Delete
                     </button>
                   </td>
@@ -885,29 +888,39 @@ function MerchantSection() {
               ))}
             </tbody>
           </table>
-          <MerchantDetailModal 
-           merchant={selectedMerchant} 
-           isOpen={isModalOpen} 
-           onClose={closeModal} 
-
+          <MerchantDetailModal
+            merchant={selectedMerchant}
+            isOpen={isModalOpen}
+            onClose={closeModal}
           />
         </div>
 
         <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            Showing <span className="font-medium">1</span> to <span className="font-medium">5</span> of <span className="font-medium">24</span> results
+            Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to <span className="font-medium">{Math.min(indexOfLastItem, merchants.length)}</span> of <span className="font-medium">{merchants.length}</span> results
           </div>
           <div className="flex space-x-2">
-            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+            <button
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+            >
               Previous
             </button>
-            <button className="px-3 py-1 border border-emerald-500 bg-emerald-500 text-white rounded-md hover:bg-emerald-600">
-              1
-            </button>
-            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-              2
-            </button>
-            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+            {Array.from({ length: totalPages }, (_, index) => (
+              <button
+                key={index + 1}
+                onClick={() => paginate(index + 1)}
+                className={`px-3 py-1 border rounded-md ${currentPage === index + 1 ? 'border-emerald-500 bg-emerald-500 text-white hover:bg-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+              >
+                {index + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+            >
               Next
             </button>
           </div>
@@ -918,18 +931,11 @@ function MerchantSection() {
 }
 
 function DspSection() {
-   
-  const {  dsps} = useUsers();
-  // const users = [
-  //   { id: 1, name: 'John Doe', email: 'john@example.com',  status: 'active', lastLogin: '2 hours ago' },
-  //   { id: 2, name: 'Jane Smith', email: 'jane@example.com',  status: 'active', lastLogin: '1 day ago' },
-  //   { id: 3, name: 'Robert Johnson', email: 'robert@example.com',  status: 'pending', lastLogin: 'Never' },
-  //   { id: 4, name: 'Emily Davis', email: 'emily@example.com',  status: 'active', lastLogin: '30 minutes ago' },
-  //   { id: 5, name: 'Michael Wilson', email: 'michael@example.com',  status: 'suspended', lastLogin: '1 week ago' },
-  // ];
-
-   const [selectedDsp, setSelectedDsp] = useState(null);
+  const { getFilteredDsps, setFilter, refresh } = useUsers();
+  const [selectedDsp, setSelectedDsp] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // Number of items to display per page
 
   const openModal = (dsp) => {
     setSelectedDsp(dsp);
@@ -941,6 +947,38 @@ function DspSection() {
     setSelectedDsp(null);
   };
 
+  const handleDelete = async (id) => {
+    try {
+      await deleteUsers(id);
+      refresh(); // Refresh the list of DSPs after deletion
+    } catch (error) {
+      console.error("Failed to delete the DSP:", error);
+    }
+  };
+
+  const handleSearchChange = (event) => {
+    setFilter({ name: event.target.value, status: null });
+    setCurrentPage(1); // Reset to the first page when search term changes
+  };
+
+  const handleStatusChange = (event) => {
+    const status = event.target.value === 'All' ? null : event.target.value;
+    setFilter({ name: '', status: status });
+    setCurrentPage(1); // Reset to the first page when status filter changes
+  };
+
+  const dsps = getFilteredDsps();
+
+  // Calculate the index of the first and last item to display on the current page
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = dsps.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Calculate the total number of pages
+  const totalPages = Math.ceil(dsps.length / itemsPerPage);
+
+  // Function to handle page changes
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <div className="space-y-6">
@@ -956,13 +994,17 @@ function DspSection() {
             </div>
             <input
               type="text"
-              placeholder="Search Merchants..."
+              placeholder="Search DSPs..."
+              onChange={handleSearchChange}
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition duration-150"
             />
           </div>
           <div className="ml-4 flex items-center">
             <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">Status:</span>
-            <select className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-white dark:bg-gray-700">
+            <select
+              onChange={handleStatusChange}
+              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-white dark:bg-gray-700"
+            >
               <option>All</option>
               <option>Approved</option>
               <option>Pending</option>
@@ -984,7 +1026,6 @@ function DspSection() {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Email
                 </th>
-
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Status
                 </th>
@@ -994,7 +1035,7 @@ function DspSection() {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {dsps.map((user) => (
+              {currentItems.map((user) => (
                 <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -1006,7 +1047,7 @@ function DspSection() {
                       </div>
                     </div>
                   </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300">
                         {user.DspDetails?.vehicleDetails.charAt(0)}
@@ -1027,8 +1068,8 @@ function DspSection() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                     <button onClick={() => openModal(user)}>View Details</button>
-                     <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
+                    <button onClick={() => openModal(user)}>View Details</button>
+                    <button onClick={() => handleDelete(user._id)} className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
                       Delete
                     </button>
                   </td>
@@ -1037,28 +1078,38 @@ function DspSection() {
             </tbody>
           </table>
           <DSPDetailModal
-           merchant={selectedDsp} 
-           isOpen={isModalOpen} 
-           onClose={closeModal} 
-
+            merchant={selectedDsp}
+            isOpen={isModalOpen}
+            onClose={closeModal}
           />
         </div>
 
         <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            Showing <span className="font-medium">1</span> to <span className="font-medium">5</span> of <span className="font-medium">24</span> results
+            Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to <span className="font-medium">{Math.min(indexOfLastItem, dsps.length)}</span> of <span className="font-medium">{dsps.length}</span> results
           </div>
           <div className="flex space-x-2">
-            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+            <button
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+            >
               Previous
             </button>
-            <button className="px-3 py-1 border border-emerald-500 bg-emerald-500 text-white rounded-md hover:bg-emerald-600">
-              1
-            </button>
-            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-              2
-            </button>
-            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+            {Array.from({ length: totalPages }, (_, index) => (
+              <button
+                key={index + 1}
+                onClick={() => paginate(index + 1)}
+                className={`px-3 py-1 border rounded-md ${currentPage === index + 1 ? 'border-emerald-500 bg-emerald-500 text-white hover:bg-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+              >
+                {index + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+            >
               Next
             </button>
           </div>
