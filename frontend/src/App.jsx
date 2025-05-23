@@ -1,18 +1,19 @@
 // Updated routing setup with role-based redirects using React Router
 
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
 import LiveDeliveryTracking from './pages/LiveDeliveryTracking';
 import RegistrationSuccess from './pages/RegistrationSuccess';
 import CartPage from './pages/CartPage';
-import { Sun, Moon } from 'lucide-react';
 import { CustomersPage } from './pages/CustomerInterface';
 import CheckoutPage from './components/checkout.jsx';
 import MerchantInventoryPage from './pages/MerchantInventoryPage.jsx';
 import OrdersPage from './pages/merchant/OrdersPage.jsx';
 import AdminsPage from './pages/AdminDashboard.jsx';
+import ProfilePage from './pages/merchant/ProfilePage.jsx';
+import ProtectedRoute from './components/ProtectedRoute'; 
 
 function AuthWrapper({ role }) {
   // Redirect based on role
@@ -64,25 +65,61 @@ export default function AppRouter() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-100 dark:bg-slate-900 transition-colors duration-300 font-sans">
-        <button
+        {/* <button
           onClick={() => setIsDarkMode(!isDarkMode)}
           className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-md border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           aria-label="Toggle Theme"
         >
           {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
+        </button> */}
 
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/customer" element={<CustomersPage />} />
-          <Route path="/merchant" element={<MerchantInventoryPage />} />
-          <Route path="/dsp" element={<LiveDeliveryTracking />} />
+          <Route
+            path="/merchant"
+            element={
+              <ProtectedRoute allowedRoles={['merchant']}>
+                <MerchantInventoryPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute allowedRoles={['merchant']}>
+                <OrdersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute allowedRoles={['merchant', 'admin', 'dsp', 'customer']}>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dsp"
+            element={
+              <ProtectedRoute allowedRoles={['dsp']}>
+                <LiveDeliveryTracking />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/registration-success" element={<RegistrationSuccess />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path='/order' element={<CheckoutPage />} />
-          <Route path='/orders' element={<OrdersPage />} />
-          <Route path="/admin" element={<AdminsPage />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminsPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/redirect" element={<AuthWrapper role={localStorage.getItem('userRole')} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

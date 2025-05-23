@@ -2,6 +2,7 @@ const User = require("../src/config/model/Users.model.js");
 const Merchant = require("../src/config/model/Merchant.model.js");
 const DSP = require("../src/config/model/DSP.model.js");
 const DeliveryPriceSettings = require("../src/config/model/DeliveryPricesetting.model.js");
+const PaymentAccountController = require("./paymentAccount.controller.js");
 
 // @desc Get all users
 const getAllUsers = async (req, res) => {
@@ -257,6 +258,11 @@ const updateUserStatus = async (req, res) => {
     merchant.approvalStatus = status;
     await merchant.save();
 
+    // Create payment account if approved
+    if (status === "approved") {
+      await PaymentAccountController.createPaymentAccount(id, "merchant");
+    }
+
     return res.json({ message: `Merchant approval status updated to ${status}`, merchant });
   } else if (user.role === "dsp") {
     // Update the approvalStatus in the DSP table
@@ -265,6 +271,11 @@ const updateUserStatus = async (req, res) => {
 
     dsp.approvalStatus = status;
     await dsp.save();
+
+    // Create payment account if approved
+    if (status === "approved") {
+      await PaymentAccountController.createPaymentAccount(id, "dsp");
+    }
 
     return res.json({ message: `DSP approval status updated `, dsp });
   } else {
