@@ -4,6 +4,7 @@ import { useCustomerShop } from '../hooks/useCustomerShop';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
 import CustomerTrackingOrders from '../components/CustomerTrackingPage';
+import ProductShowcase from '../components/Product/ProductShowcase';
 
 // --- Constants ---
 const TAX_RATE = 0.15; // 15% Tax Rate
@@ -309,10 +310,8 @@ export function CustomersPage() {
             {/* Separator */}
             <hr className="my-8 border-gray-300 dark:border-gray-700/50" />
 
-            {/* All Products Section Title */}
-            <h2 className="text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-6">All Products</h2>
-            {/* Product Grid */}
-            <ProductGrid
+            {/* All Products Section */}
+            <ProductShowcase
               products={filteredProducts}
               onProductSelect={handleProductSelect}
               onSaveToggle={handleSaveToggle}
@@ -632,7 +631,7 @@ function CartPopover({ cartItems, onClose, onRemove, onUpdateQuantity }) {
                         className="w-12 px-1 py-0.5 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded text-xs text-center text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
                   </div>
-                   <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-1">${((item.product?.price || 0) * item.quantity).toFixed(2)}</p>
+                   <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-1">${typeof ((item.product?.price || 0) * item.quantity) === 'number' ? ((item.product?.price || 0) * item.quantity).toFixed(2) : '0.00'}</p>
                 </div>
                 <button onClick={() => { console.log('Remove button clicked for cart item:', item._id); onRemove(item._id); }} className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                   <Trash2 className="w-4 h-4" />
@@ -649,7 +648,7 @@ function CartPopover({ cartItems, onClose, onRemove, onUpdateQuantity }) {
           <div className="space-y-1 text-sm mb-3">
             <div className="flex justify-between text-gray-700 dark:text-gray-300">
               <span>Subtotal:</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>${typeof subtotal === 'number' ? subtotal.toFixed(2) : '0.00'}</span>
             </div>
           </div>
           <button
@@ -677,7 +676,7 @@ function CartPopover({ cartItems, onClose, onRemove, onUpdateQuantity }) {
 
 
 // Filter Sidebar Component - Themed
-function FilterSidebar({ categories, colors, activeFilters, onFilterChange, isOpen, onClose }) {
+function FilterSidebar({ categories,  activeFilters, onFilterChange, isOpen, onClose }) {
   const [openSections, setOpenSections] = useState({ category: true, color: true });
 
   const toggleSection = (section) => {
@@ -720,28 +719,6 @@ function FilterSidebar({ categories, colors, activeFilters, onFilterChange, isOp
                   <label key={category} className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700/50">
                     <input type="radio" name="category" value={category} checked={activeFilters.category === category} onChange={() => handleRadioChange('category', category)} className="form-radio h-4 w-4 text-emerald-600 dark:text-emerald-500 bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 focus:ring-emerald-500 transition duration-150 ease-in-out cursor-pointer"/>
                     <span>{category}</span>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Color Filter */}
-          <div className="mb-6">
-            <button onClick={() => toggleSection('color')} className="w-full flex justify-between items-center text-left font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2 focus:outline-none">
-              <span>Color</span>
-               {openSections.color ? <ChevronUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
-            {openSections.color && (
-              <div className="space-y-1 pl-2 border-l border-gray-300 dark:border-gray-700 ml-1">
-                <label className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700/50">
-                   <input type="radio" name="color" value="" checked={!activeFilters.color} onChange={() => onFilterChange('color', '')} className="form-radio h-4 w-4 text-emerald-600 dark:text-emerald-500 bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 focus:ring-emerald-500 transition duration-150 ease-in-out cursor-pointer"/>
-                   <span>All Colors</span>
-                 </label>
-                {colors.map(color => (
-                  <label key={color} className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700/50">
-                    <input type="radio" name="color" value={color} checked={activeFilters.color === color} onChange={() => handleRadioChange('color', color)} className="form-radio h-4 w-4 text-emerald-600 dark:text-emerald-500 bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 focus:ring-emerald-500 transition duration-150 ease-in-out cursor-pointer"/>
-                    <span>{color}</span>
                   </label>
                 ))}
               </div>
@@ -795,109 +772,6 @@ function FrequentlyBoughtSection({ products, onProductSelect, onSaveToggle, save
 }
 
 
-// Product Grid Component - Themed
-function ProductGrid({ products, onProductSelect, onSaveToggle, savedItems, onAddToCart }) {
-  if (!products || products.length === 0) {
-    // Theme-aware text
-    return <p className="text-center text-gray-500 dark:text-gray-400 mt-10">No products found matching your criteria.</p>;
-  }
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-      {products.map(product => (
-        <ProductCard
-          key={product.id}
-          product={product}
-          onSelect={onProductSelect}
-          onSaveToggle={onSaveToggle}
-          isSaved={savedItems.has(product.id)}
-          onAddToCart={onAddToCart}
-        />
-      ))}
-    </div>
-  );
-}
-
-
-// Product Card Component - Themed
-function ProductCard({ product, onSelect, onSaveToggle, isSaved, onAddToCart }) {
-  const [isAnimatingHeart, setIsAnimatingHeart] = useState(false);
-
-  const handleHeartClick = (e) => {
-      e.stopPropagation();
-      onSaveToggle(product.id);
-      setIsAnimatingHeart(true);
-      setTimeout(() => setIsAnimatingHeart(false), 300);
-  };
-
-  const handleCartClick = (e) => {
-    e.stopPropagation();
-    console.log('Add to Cart button clicked (id):', product._id || product.id);
-    onAddToCart(product);
-  };
-
-  return (
-    // Theme-aware card styles
-    <div className="bg-white dark:bg-gray-800/60 backdrop-blur-sm rounded-lg shadow-md overflow-hidden hover:shadow-lg dark:hover:shadow-emerald-900/40 transition-all duration-300 ease-in-out group flex flex-col border border-gray-200 dark:border-gray-700/50 hover:border-emerald-300 dark:hover:border-emerald-700/50">
-      {/* Image Section */}
-      <div className="relative">
-        <img
-          src={getImageUrl(product.image)}
-          alt={product.name}
-          className="w-full h-48 object-cover cursor-pointer group-hover:scale-105 transition-transform duration-300"
-          onClick={() => onSelect(product)}
-          onError={(e) => { 
-            console.error('Image failed to load:', product.image);
-            console.error('Attempted URL:', e.target.src);
-            e.target.onerror = null; 
-            e.target.src = 'https://placehold.co/400x400/f3f4f6/9ca3af?text=Not+Found';
-          }}
-        />
-        {/* Save Icon Button - Theme-aware */}
-        <button
-          onClick={handleHeartClick}
-          className={`absolute top-2 right-2 p-1.5 rounded-full transition-all duration-200 ease-in-out ${
-            isSaved ? 'bg-red-500/90 text-white' : 'bg-gray-100/70 dark:bg-gray-900/60 text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 hover:bg-gray-200/80 dark:hover:bg-gray-700/80'
-          } ${isAnimatingHeart ? 'animate-heart-pop' : ''} backdrop-blur-sm`}
-          aria-label={isSaved ? 'Unsave item' : 'Save item'}
-        >
-          <Heart className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
-        </button>
-      </div>
-
-      {/* Card Content Section - Theme-aware */}
-      <div className="p-4 flex flex-col flex-grow">
-        <h3
-          className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-1 truncate cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-          onClick={() => onSelect(product)}
-          title={product.name}
-        >
-          {product.name}
-        </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{product.category}</p>
-        <div className="flex justify-between items-center mb-3">
-          <p className="text-lg font-bold text-emerald-700 dark:text-emerald-500">${product.price.toFixed(2)}</p>
-          {/* renderRatingStars is already theme-aware */}
-          {renderRatingStars(product.rating)}
-        </div>
-        {/* Add to Cart Button - Theme-aware */}
-        <button
-           onClick={handleCartClick}
-           className="w-full mt-auto px-4 py-2 bg-gray-100 dark:bg-gray-700/80 text-emerald-700 dark:text-emerald-400 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-800 transition-all duration-300 ease-in-out flex items-center justify-center space-x-1 group/button hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-600 dark:hover:text-white hover:shadow-[0_0_15px_rgba(16,185,129,0.4)] dark:hover:shadow-[0_0_15px_rgba(16,185,129,0.6)] focus:shadow-[0_0_15px_rgba(16,185,129,0.6)]"
-        >
-          <ShoppingCart className="w-4 h-4 transition-colors duration-300"/>
-          <span className="transition-colors duration-300">Add to Cart</span>
-        </button>
-      </div>
-      {/* Heart Animation */}
-      <style jsx global>{`
-        @keyframes heartPop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
-        .animate-heart-pop { animation: heartPop 0.3s ease-in-out; }
-      `}</style>
-    </div>
-  );
-}
-
-
 // Product Detail Modal Component - Themed
 function ProductDetailModal({ product, onClose, onAddToCart }) {
   if (!product) return null;
@@ -943,7 +817,7 @@ function ProductDetailModal({ product, onClose, onAddToCart }) {
                         {renderRatingStars(product.rating)}
                         <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">({product.rating.toFixed(1)} rating)</span>
                     </div>
-                    <p className="text-3xl lg:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400 mb-5">${product.price.toFixed(2)}</p>
+                    <p className="text-3xl lg:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400 mb-5">${typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}</p>
                     <h3 className="text-md font-semibold text-gray-800 dark:text-gray-200 mb-1">Description</h3>
                     <p className="text-sm text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">{product.description}</p>
                     {/* Action Buttons - Theme-aware */}

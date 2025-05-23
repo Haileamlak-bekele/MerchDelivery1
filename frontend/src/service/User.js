@@ -31,7 +31,13 @@ export const updateMerchantStatus = async (id, status) => {
   const response = await api.put(`/admin/approve/${id}`, approvalStatus);
   return response.data;
 };
+
 export const deleteUsers = async (id) => {
   const response = await api.delete(`/admin/user/${id}`);
   return response.data;
 }
+
+export const fetchMerchantProfile = async () => {
+  const response = await api.get('/merchant/profile');
+  return response.data;
+};

@@ -1,14 +1,22 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Package, ShoppingCart, UserCircle, LogOut, ArrowLeft } from 'lucide-react';
 
-function Sidebar({ isSidebarOpen, setIsSidebarOpen, handleLogout }) {
+function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const navItems = [
     { id: 'inventory', label: 'Inventory', icon: Package, to: '/merchant' },
     { id: 'orders', label: 'Orders', icon: ShoppingCart, to: '/orders' },
     { id: 'profile', label: 'Profile', icon: UserCircle, to: '/profile' },
   ];
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('userRole');
+    navigate('/auth');
+  };
 
   return (
     <>

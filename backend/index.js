@@ -14,6 +14,7 @@ const merchantRoutes = require("./routes/merchant.routes.js");
 const dspRoutes = require("./routes/dsp.routes.js");
 const customersRoutes = require("./routes/customer.routes.js");
 const orderRoutes = require("./routes/order.routes.js");
+const paymentAccountRoutes = require("./routes/paymentAccount.routes.js");
 
 dotenv.config();
 dbConnect();
@@ -46,6 +47,7 @@ app.use("/merchant", merchantRoutes);
 app.use("/dsp", dspRoutes);
 app.use("/customers", customersRoutes);
 app.use("/orders", orderRoutes);
+app.use("/payment-accounts", paymentAccountRoutes);
 
 app.listen(port, () => {
   console.log(`Server is running on port:${port}`);

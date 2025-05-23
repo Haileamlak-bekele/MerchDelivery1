@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Home, Package, Users, LogIn, Menu, X, Sun, Moon, Info, Settings, Mail } from 'lucide-react'; // Added relevant icons
+import ProductShowcase from '../components/Product/ProductShowcase';
+import { API_BASE_URL } from '../config';
+import { Link } from 'react-router-dom';
 
 // --- Theme Note ---
 // Using Emerald theme (emerald-500 / dark:emerald-400 as primary accent)
@@ -23,6 +26,26 @@ export default function App() {
 // --- Landing Page Component ---
 function LandingPage({ theme, toggleTheme }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`${API_BASE_URL}/customers/allProducts`)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch products');
+        return res.json();
+      })
+      .then(data => {
+        setProducts(Array.isArray(data) ? data : data.products || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message || 'Error fetching products');
+        setLoading(false);
+      });
+  }, []);
 
   // Smooth scroll handler
   const handleScrollLink = (e, targetId) => {
@@ -147,12 +170,12 @@ function LandingPage({ theme, toggleTheme }) {
                   </p>
                   <div className="mt-12">
                     {/* Button Re-themed */}
-                    <a
-                      href="#services" onClick={(e) => handleScrollLink(e, 'services')}
+                    <Link
+                        to="/auth"
                       className="text-emerald-900 font-bold px-8 py-4 rounded-lg shadow-lg outline-none focus:outline-none mr-1 mb-1 bg-emerald-400 active:bg-emerald-500 uppercase text-sm hover:bg-emerald-300 hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-in-out"
                     >
-                      Explore Services
-                    </a>
+                      Get Started
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -165,74 +188,19 @@ function LandingPage({ theme, toggleTheme }) {
             </svg>
           </div>
         </section>
-
-        {/* About Section Placeholder */}
-        <section id="about" className="py-20 md:py-28 bg-gray-100 dark:bg-slate-800 transition-colors duration-300">
-           <div className="container mx-auto px-4 text-center">
-                <h2 className="text-3xl font-bold mb-4 text-gray-800 dark:text-white">About MDS Platform</h2>
-                <p className="max-w-3xl mx-auto text-gray-600 dark:text-gray-400">
-                    We bridge the gap between local merchants, customers, and reliable delivery providers in Debre Markos. Our platform streamlines operations, enhances visibility with real-time tracking, and fosters growth for businesses within our community.
-                    {/* Add more content about the platform's mission or story */}
-                </p>
-           </div>
-        </section>
-
-        {/* Services Section (Previously Features) - Re-themed */}
-        <section id="services" className="py-20 md:py-28 bg-white dark:bg-slate-900 transition-colors duration-300">
-          <div className="container mx-auto px-4">
-             <div className="flex flex-wrap justify-center text-center mb-16">
-              <div className="w-full lg:w-6/12 px-4">
-                <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Our Core Services</h2>
-                <p className="text-lg leading-relaxed mt-4 mb-4 text-gray-600 dark:text-gray-400">
-                  Providing the tools and reliability you need for efficient delivery.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap justify-center gap-y-8 lg:gap-x-8">
-              {/* Service Card 1 - Re-themed */}
-               <div className="w-full md:w-5/12 lg:w-3/12 px-4">
-                 <div className="relative flex flex-col min-w-0 break-words bg-gray-50 dark:bg-slate-800 w-full shadow-lg hover:shadow-xl dark:shadow-emerald-900/30 dark:hover:shadow-emerald-700/40 rounded-lg p-6 transition-all duration-300 ease-in-out transform hover:-translate-y-1 border border-gray-200 dark:border-slate-700">
-                   <div className="flex-shrink-0">
-                      {/* Emerald Icon BG */}
-                      <Package className="w-12 h-12 text-white bg-emerald-500 dark:bg-emerald-600 p-3 rounded-full mb-5 shadow-md" />
-                   </div>
-                   <h6 className="text-xl mb-1 font-semibold text-gray-700 dark:text-gray-100">Real-time Tracking</h6>
-                   <p className="mb-4 text-gray-600 dark:text-gray-400">
-                     Monitor deliveries step-by-step with live updates for merchants and customers.
-                   </p>
-                 </div>
-               </div>
-               {/* Service Card 2 - Re-themed */}
-                <div className="w-full md:w-5/12 lg:w-3/12 px-4">
-                 <div className="relative flex flex-col min-w-0 break-words bg-gray-50 dark:bg-slate-800 w-full shadow-lg hover:shadow-xl dark:shadow-blue-900/30 dark:hover:shadow-blue-700/40 rounded-lg p-6 transition-all duration-300 ease-in-out transform hover:-translate-y-1 border border-gray-200 dark:border-slate-700">
-                   <div className="flex-shrink-0">
-                      <Users className="w-12 h-12 text-white bg-blue-500 dark:bg-blue-600 p-3 rounded-full mb-5 shadow-md" />
-                   </div>
-                   <h6 className="text-xl mb-1 font-semibold text-gray-700 dark:text-gray-100">Verified Providers</h6>
-                   <p className="mb-4 text-gray-600 dark:text-gray-400">
-                     Connect with trustworthy and professional riders ensuring safe handling and delivery.
-                   </p>
-                 </div>
-               </div>
-                {/* Service Card 3 - Re-themed */}
-                <div className="w-full md:w-5/12 lg:w-3/12 px-4">
-                 <div className="relative flex flex-col min-w-0 break-words bg-gray-50 dark:bg-slate-800 w-full shadow-lg hover:shadow-xl dark:shadow-purple-900/30 dark:hover:shadow-purple-700/40 rounded-lg p-6 transition-all duration-300 ease-in-out transform hover:-translate-y-1 border border-gray-200 dark:border-slate-700">
-                   <div className="flex-shrink-0">
-                     <Settings className="w-12 h-12 text-white bg-purple-500 dark:bg-purple-600 p-3 rounded-full mb-5 shadow-md" />
-                   </div>
-                   <h6 className="text-xl mb-1 font-semibold text-gray-700 dark:text-gray-100">Easy Management</h6>
-                   <p className="mb-4 text-gray-600 dark:text-gray-400">
-                     Simple tools for merchants to manage products, orders, and view performance analytics.
-                   </p>
-                 </div>
-               </div>
-            </div>
-          </div>
-        </section>
-
-         {/* Contact Section Placeholder (Footer acts as contact target) */}
-         {/* A more detailed contact form could be added here if needed */}
-
+        <div className="p-10">
+        <h1 className="text-2xl md:text-3xl mb-10 font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 dark:from-emerald-500 dark:to-cyan-500">
+                Discover Products
+              </h1>
+       {loading ? (
+        <div className="text-center text-emerald-600 dark:text-emerald-400 py-4">Loading products...</div>
+      ) : error ? (
+        <div className="text-center text-red-600 dark:text-red-400 py-4">{error}</div>
+      ) : (
+        <ProductShowcase products={products} />
+      )}
+        </div>
+       
       </main>
 
       {/* Footer - Re-themed & acts as Contact section target */}

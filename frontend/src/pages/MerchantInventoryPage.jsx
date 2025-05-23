@@ -9,13 +9,6 @@ import Sidebar from '../components/Sidebar';
 export default function MerchantInventoryPage() {
   const product = useProduct();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeView, setActiveView] = useState('inventory');
-
-  // Dummy logout handler
-  const handleLogout = () => {
-    // Implement logout logic here
-    alert('Logged out!');
-  };
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-gray-900 via-gray-800 to-indigo-900 text-gray-200 font-sans">
@@ -23,7 +16,6 @@ export default function MerchantInventoryPage() {
       <Sidebar
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
-        handleLogout={handleLogout}
       />
       {/* Main Content */}
       <div className="flex-1 p-4 md:p-6 lg:p-8">
