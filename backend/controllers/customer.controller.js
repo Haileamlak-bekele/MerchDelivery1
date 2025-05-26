@@ -133,6 +133,8 @@ const confirmOrder = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+
 // Place an order
 const placeOrder = async (req, res) => {
   try {
@@ -258,11 +260,116 @@ const assignDsp = async (req, res) => {
     }
 
     order.dspAssigned = dspId;
+
+    // If the order is CONFIRMED, update status to DspAssigned
+    if (order.orderStatus === 'CONFIRMED') {
+      order.orderStatus = 'DspAssigned';
+    }
+
     await order.save();
 
     res.status(200).json({ message: 'DSP assigned successfully', order });
   } catch (error) {
     console.error('Error in assignDsp:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+//dsp accepts order reqest
+const DspAcceptOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+   // change order status to DspAccepted
+    order.orderStatus = 'DspAccepted';
+    await order.save();
+    res.status(200).json({ message: 'Order accepted by DSP', order });
+  }
+  catch (error) {
+    console.error('Error in DspAcceptOrder:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+// DSP rejects order request
+const DspRejectOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    // Change order status to DspRejected
+    order.orderStatus = 'DspRejected';
+    await order.save();
+    res.status(200).json({ message: 'Order rejected by DSP', order });
+  }
+  catch (error) {
+    console.error('Error in DspRejectOrder:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// DSP marks order as on shipping
+const DspOnShipping = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    // Change order status to OnShipping
+    order.orderStatus = 'OnShipping';
+    await order.save();
+    res.status(200).json({ message: 'Order marked as on shipping by DSP', order });
+  }
+  catch (error) {
+    console.error('Error in DspOnShipping:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+}
+//Customer changes order status to delivered
+const customerOrderDelivered = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    // Change order status to DELIVERED
+    order.orderStatus = 'DELIVERED';
+    await order.save();
+    res.status(200).json({ message: 'Order marked as delivered', order });
+  }
+  catch (error) { 
+    console.error('Error in customerOrderDelivered:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+//Reassign order to another Dsp
+const reassignDsp = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { newDspId } = req.body;
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    // Reassign the DSP
+    order.dspAssigned = newDspId;
+    // if the order status is rejected, change it to DspAssigned
+    if (order.orderStatus === 'DspRejected') {
+      order.orderStatus = 'DspAssigned';
+    }
+    await order.save();
+    res.status(200).json({ message: 'Order reassigned to new DSP successfully', order });
+  }
+  catch (error) {
+    console.error('Error in reassignDsp:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -301,4 +408,9 @@ module.exports = {
   removeFromCart,
   assignDsp,
   getOrdersByCustomerId,
+  DspAcceptOrder,
+  DspRejectOrder,
+  DspOnShipping,
+  customerOrderDelivered,
+  reassignDsp,
 };

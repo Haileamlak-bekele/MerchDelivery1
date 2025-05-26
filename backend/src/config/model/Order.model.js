@@ -50,7 +50,7 @@ const orderSchema = new Schema({
   },
   orderStatus: {
     type: String,
-    enum: ['PENDING', 'CONFIRMED', 'DELIVERED', 'CANCELLED'],
+    enum: ['PENDING', 'CONFIRMED','DspAssigned','DspAccepted','DspRejected','OnShipping', 'DELIVERED', 'CANCELLED'],
     default: 'PENDING'
   },
   dspAssigned: {

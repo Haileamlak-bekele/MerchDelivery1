@@ -157,13 +157,15 @@ function ActiveOrdersListView({ orders, onTrackOrder, onShowOrderDetails, onSimu
                     <ListOrdered size={18} />
                     <span>Order Details</span>
                   </button>
-                  <button
-                    onClick={() => onTrackOrder(order.id)}
-                    className="w-full sm:w-auto flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-semibold py-2.5 px-5 rounded-lg shadow hover:shadow-md transition-all duration-150 ease-in-out space-x-2 active:bg-emerald-700"
-                  >
-                    <MapPin size={18} />
-                    <span>Track Order</span>
-                  </button>
+                  {order.orderStatus === 'OnShipping' && (
+  <button
+    onClick={() => onTrackOrder(order.id)}
+    className="w-full sm:w-auto flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-semibold py-2.5 px-5 rounded-lg shadow hover:shadow-md transition-all duration-150 ease-in-out space-x-2 active:bg-emerald-700"
+  >
+    <MapPin size={18} />
+    <span>Track Order</span>
+  </button>
+)}
                 </div>
                 {order.status === 'Processing' && (
                   <p className="text-sm text-gray-400 dark:text-gray-500 text-right pr-2">Preparing your order...</p>

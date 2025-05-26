@@ -39,8 +39,8 @@ export default function OrdersPage() {
   };
 
   const handleViewOrder = (order) => {
-    setSelectedOrder(order)
-    setIsOrderModalOpen(true)
+    setSelectedOrder(order);
+    setIsOrderModalOpen(true);
   };
 
   const handleConfirmOrder = async (orderId) => {
@@ -50,6 +50,15 @@ export default function OrdersPage() {
     } catch (error) {
       console.error('Failed to confirm order:', error);
     }
+  };
+
+  // Callback to update order status
+  const updateOrderStatus = (orderId, newStatus) => {
+    setSelectedOrder((prevOrder) =>
+      prevOrder && prevOrder._id === orderId
+        ? { ...prevOrder, orderStatus: newStatus }
+        : prevOrder
+    );
   };
 
   const getStatusPill = (status) => {
@@ -66,6 +75,8 @@ export default function OrdersPage() {
         return <span className="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 items-center"><Package size={14} className="mr-1.5" />Delivered</span>;
       case 'cancelled':
         return <span className="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 items-center"><XCircle size={14} className="mr-1.5" />Cancelled</span>;
+      case 'DspAssigned':
+        return <span className="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800 items-center"><CheckCircle size={14} className="mr-1.5" />DSP Assigned</span>;
       default:
         return <span className="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 text-gray-700">{status}</span>;
     }
@@ -182,6 +193,7 @@ export default function OrdersPage() {
               onConfirm={handleConfirmOrder}
               inventoryItems={inventoryItems}
               activeDsps={activeDsps}
+              updateOrderStatus={updateOrderStatus}
             />
           )}
         </div>
@@ -190,9 +202,8 @@ export default function OrdersPage() {
   );
 }
 
-function OrderDetailsModal({ isOpen, onClose, order, onConfirm, inventoryItems, activeDsps }) {
-
-  const [selectedDspId, setSelectedDspId] =useState('');
+function OrderDetailsModal({ isOpen, onClose, order, onConfirm, inventoryItems, activeDsps, updateOrderStatus }) {
+  const [selectedDspId, setSelectedDspId] = useState('');
 
   // Reset selected DSP when modal opens or order changes
   useEffect(() => {
@@ -200,30 +211,29 @@ function OrderDetailsModal({ isOpen, onClose, order, onConfirm, inventoryItems, 
   }, [isOpen, order?._id]);
 
   const handleAssignDsp = async (orderId, dspId) => {
-  try {
-    const token = localStorage.getItem('authToken');
-    await fetch(`http://localhost:5000/orders/${orderId}/assign-dsp`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ dspId }),
-    });
-    alert('DSP assigned successfully!');
-    setSelectedDspId('');
-    onClose();
-  } catch (err) {
-    alert('Failed to assign DSP');
-  }
-};
+    try {
+      const token = localStorage.getItem('authToken');
+      await fetch(`http://localhost:5000/orders/${orderId}/assign-dsp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ dspId, orderStatus: 'DspAssigned' }),
+      });
+      alert('DSP assigned successfully!');
+      updateOrderStatus(orderId, 'DspAssigned'); // Update the status in the modal
+      setSelectedDspId('');
+      onClose();
+    } catch (err) {
+      alert('Failed to assign DSP');
+    }
+  };
 
   if (!isOpen || !order) return null;
 
   const getInventoryItemById = (productId) =>
     inventoryItems.find(item => item._id === productId);
-
-  
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 ease-in-out animate-fade-in">
@@ -270,14 +280,14 @@ function OrderDetailsModal({ isOpen, onClose, order, onConfirm, inventoryItems, 
               <h4 className="text-lg font-semibold text-indigo-300 mb-2">Order Summary</h4>
               <p><strong className="text-gray-400">Status:</strong> {order.orderStatus}</p>
               <p><strong className="text-gray-400">Total Amount:</strong> ${order.totalAmount.toFixed(2)}</p>
-             {order.dspAssigned && (
-  <p>
-    <strong className="text-gray-400">DSP Assigned:</strong>{" "}
-    {typeof order.dspAssigned === "object"
-      ? `${order.dspAssigned.name} (${order.dspAssigned.email})`
-      : order.dspAssigned}
-  </p>
-)}
+              {order.dspAssigned && (
+                <p>
+                  <strong className="text-gray-400">DSP Assigned:</strong>{" "}
+                  {typeof order.dspAssigned === "object"
+                    ? `${order.dspAssigned.name} (${order.dspAssigned.email})`
+                    : order.dspAssigned}
+                </p>
+              )}
             </div>
           </div>
 
@@ -327,33 +337,33 @@ function OrderDetailsModal({ isOpen, onClose, order, onConfirm, inventoryItems, 
           </div>
         </div>
         {order.orderStatus === 'CONFIRMED' && (
-  <div className="mt-4">
-    <label className="block text-sm font-medium text-gray-300 mb-1">Assign DSP:</label>
-    <select
-      className="w-full rounded-md p-2 bg-gray-700 text-white"
-      value={selectedDspId}
-      onChange={e => setSelectedDspId(e.target.value)}
-    >
-      <option value="">Select DSP</option>
-      {activeDsps && activeDsps.length > 0 ? (
-        activeDsps.map(dsp => (
-          <option key={dsp._id} value={dsp._id}>
-            {dsp.name} ({dsp.email})
-          </option>
-        ))
-      ) : (
-        <option disabled>No active DSPs available</option>
-      )}
-    </select>
-    <button
-      className="mt-2 px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700"
-      onClick={() => handleAssignDsp(order._id, selectedDspId)}
-      disabled={!selectedDspId}
-    >
-      Assign DSP
-    </button>
-  </div>
-)}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-300 mb-1">Assign DSP:</label>
+            <select
+              className="w-full rounded-md p-2 bg-gray-700 text-white"
+              value={selectedDspId}
+              onChange={e => setSelectedDspId(e.target.value)}
+            >
+              <option value="">Select DSP</option>
+              {activeDsps && activeDsps.length > 0 ? (
+                activeDsps.map(dsp => (
+                  <option key={dsp._id} value={dsp._id}>
+                    {dsp.name} ({dsp.email})
+                  </option>
+                ))
+              ) : (
+                <option disabled>No active DSPs available</option>
+              )}
+            </select>
+            <button
+              className="mt-2 px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700"
+              onClick={() => handleAssignDsp(order._id, selectedDspId)}
+              disabled={!selectedDspId}
+            >
+              Assign DSP
+            </button>
+          </div>
+        )}
 
         <div className="flex justify-end items-center pt-5 border-t border-gray-700/60 mt-auto space-x-3 sticky bottom-0 bg-gray-800 p-6 -mx-0 -mb-0 rounded-b-lg">
           <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700/70 rounded-md hover:bg-gray-600/70 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition duration-150 ease-in-out">
