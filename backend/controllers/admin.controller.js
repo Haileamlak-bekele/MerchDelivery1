@@ -1,6 +1,7 @@
 const User = require("../src/config/model/Users.model.js");
 const Merchant = require("../src/config/model/Merchant.model.js");
 const DSP = require("../src/config/model/DSP.model.js");
+const Order = require("../src/config/model/Order.model.js")
 const DeliveryPriceSettings = require("../src/config/model/DeliveryPricesetting.model.js");
 
 // @desc Get all users
@@ -133,6 +134,12 @@ const getPlatformStats = async (req, res) => {
     const pendingDsps = await DSP.countDocuments({ approvalStatus: "pending" });
     const rejectedDsps = await DSP.countDocuments({ approvalStatus: "rejected" });
 
+    //count orders
+    const totalOrders = await Order.countDocuments();
+    const pendingOrders = await Order.countDocuments({ orderStatus:"PENDING" });
+    const inProgressOrders = await Order.countDocuments({ orderStatus:"CONFIRMED" });
+    const completedOrders = await Order.countDocuments({orderStatus:"DELIVERD"})
+
     // Get registered users by day of the week for the last 7 days
     const weeklyRegisteredUsers = await User.aggregate([
       {
@@ -224,6 +231,12 @@ const getPlatformStats = async (req, res) => {
         weekly: formattedWeeklyData,
         monthly: formattedMonthlyData,
       },
+      orders:{
+        total : totalOrders,
+        pending : pendingOrders,
+        completed :completedOrders,
+        inProgress : inProgressOrders,
+      }
     });
   } catch (error) {
     console.error("Error fetching platform stats:", error);
