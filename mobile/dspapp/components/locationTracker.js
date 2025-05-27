@@ -26,14 +26,14 @@ const LocationTracker = () => {
       locationSubscription.current = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
-          timeInterval: 10000,
-          distanceInterval: 20,
+          timeInterval: 1000,
+          distanceInterval: 0,
         },
         (location) => {
           if (!isMounted) return;
           const { latitude, longitude } = location.coords;
 
-          fetch('http://192.168.217.121:5000/dsp/location', {
+          fetch('http://192.168.137.1:5000/dsp/location', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

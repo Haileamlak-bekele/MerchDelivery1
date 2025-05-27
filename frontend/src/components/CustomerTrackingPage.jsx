@@ -1,12 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   MapPin, MessageSquare, Star, AlertCircle, Send, LocateFixed, User, ShoppingBag, Clock, X, ThumbsUp, ThumbsDown,
   ChevronDown, ArrowLeft, CheckCircle, Truck, Loader2, ChevronRight, ListOrdered, PackageCheck, CheckCircle2,
   Heart, Filter, ChevronUp, ShoppingCart, Search, Trash2, Settings, LogOut, Info, Phone, Sun, Moon, Package
 } from 'lucide-react';
+import { GoogleMap, LoadScript, DirectionsRenderer,Marker } from '@react-google-maps/api';
 import { API_BASE_URL } from '../config'; // <-- Add this import
+import { io } from "socket.io-client";
 
 // Mock Data - Replace with API calls in a real application
+
+const GOOGLE_MAPS_API_KEY = "AIzaSyA7WjmOJXI06NhxctNMkw5UE7w33LYk5bc"; // <-- Replace with your real API key
 
 const getCurrentTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -153,13 +157,15 @@ function ActiveOrdersListView({ orders, onTrackOrder, onShowOrderDetails, onSimu
                     <ListOrdered size={18} />
                     <span>Order Details</span>
                   </button>
-                  <button
-                    onClick={() => onTrackOrder(order.id)}
-                    className="w-full sm:w-auto flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-semibold py-2.5 px-5 rounded-lg shadow hover:shadow-md transition-all duration-150 ease-in-out space-x-2 active:bg-emerald-700"
-                  >
-                    <MapPin size={18} />
-                    <span>Track Order</span>
-                  </button>
+                  {order.orderStatus === 'OnShipping' && (
+  <button
+    onClick={() => onTrackOrder(order.id)}
+    className="w-full sm:w-auto flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-semibold py-2.5 px-5 rounded-lg shadow hover:shadow-md transition-all duration-150 ease-in-out space-x-2 active:bg-emerald-700"
+  >
+    <MapPin size={18} />
+    <span>Track Order</span>
+  </button>
+)}
                 </div>
                 {order.status === 'Processing' && (
                   <p className="text-sm text-gray-400 dark:text-gray-500 text-right pr-2">Preparing your order...</p>
@@ -190,27 +196,68 @@ function ActiveOrdersListView({ orders, onTrackOrder, onShowOrderDetails, onSimu
 // ...existing imports and code...
 // Add this simple placeholder map component for demonstration.
 // Replace with your real map implementation as needed.
-function OrderMapView({ customerLocation, merchantLocation }) {
+
+
+
+
+function OrderMapView({ customerLocation, merchantLocation, dspLocation }) {
+  const [directions, setDirections] = useState(null);
+
+  const handleMapLoad = useCallback((map) => {
+    if (
+      customerLocation &&
+      merchantLocation &&
+      customerLocation.lat &&
+      customerLocation.lng &&
+      merchantLocation.lat &&
+      merchantLocation.lng &&
+      window.google
+    ) {
+      const directionsService = new window.google.maps.DirectionsService();
+      directionsService.route(
+        {
+          origin: { lat: merchantLocation.lat, lng: merchantLocation.lng },
+          destination: { lat: customerLocation.lat, lng: customerLocation.lng },
+          travelMode: window.google.maps.TravelMode.DRIVING,
+        },
+        (result, status) => {
+          if (status === window.google.maps.DirectionsStatus.OK) {
+            setDirections(result);
+          } else {
+            setDirections(null);
+          }
+        }
+      );
+    }
+  }, [customerLocation, merchantLocation]);
+
   return (
-    <div className="w-11/12 h-80 md:h-[80%] bg-white dark:bg-gray-900 rounded-xl flex flex-col items-center justify-center shadow-inner border border-dashed border-emerald-400">
-      <span className="text-emerald-600 dark:text-emerald-300 text-lg font-semibold mb-2">
-        Map will be rendered here
-      </span>
-      <div className="text-xs text-gray-700 dark:text-gray-300">
-        <div>
-          <span className="font-semibold">Customer Location:</span>{" "}
-          {customerLocation
-            ? `${customerLocation.lat}, ${customerLocation.lng}`
-            : "N/A"}
-        </div>
-        <div>
-          <span className="font-semibold">Merchant Location:</span>{" "}
-          {merchantLocation
-            ? `${merchantLocation.lat}, ${merchantLocation.lng}`
-            : "N/A"}
-        </div>
-      </div>
-    </div>
+    <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
+      <GoogleMap
+        mapContainerStyle={{ width: '100%', height: '100%' }}
+        center={
+          dspLocation && dspLocation.lat && dspLocation.lng
+            ? { lat: dspLocation.lat, lng: dspLocation.lng }
+            : merchantLocation && merchantLocation.lat && merchantLocation.lng
+            ? { lat: merchantLocation.lat, lng: merchantLocation.lng }
+            : { lat: 0, lng: 0 }
+        }
+        zoom={13}
+        onLoad={handleMapLoad}
+      >
+        {directions && <DirectionsRenderer directions={directions} />}
+        {dspLocation && (
+          <Marker
+            position={{ lat: dspLocation.lat, lng: dspLocation.lng }}
+            label="DSP"
+            icon={{
+              url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+              scaledSize: { width: 40, height: 40 }
+            }}
+          />
+        )}
+      </GoogleMap>
+    </LoadScript>
   );
 }
 
@@ -221,18 +268,23 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const leafletCSSId = 'leaflet-css';
-    if (!document.getElementById(leafletCSSId)) {
-      const link = document.createElement('link');
-      link.id = leafletCSSId;
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
-      link.crossOrigin = '';
-      document.head.appendChild(link);
-    }
-  }, []);
+  const [dspLocation, setDspLocation] = useState(null);
+  const socketRef = useRef();
+
+   
+
+  // useEffect(() => {
+  //   const leafletCSSId = 'leaflet-css';
+  //   if (!document.getElementById(leafletCSSId)) {
+  //     const link = document.createElement('link');
+  //     link.id = leafletCSSId;
+  //     link.rel = 'stylesheet';
+  //     link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  //     link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+  //     link.crossOrigin = '';
+  //     document.head.appendChild(link);
+  //   }
+  // }, []);
 
   useEffect(() => {
     let customerId = localStorage.getItem('customerId');
@@ -247,6 +299,8 @@ function App() {
         }
       }
     }
+
+    
     const authToken = localStorage.getItem('authToken') || (JSON.parse(localStorage.getItem('user'))?.token);
 
     if (!customerId) {
@@ -305,6 +359,33 @@ function App() {
   const selectedOrder = activeOrders.find(order => String(order.id) === String(selectedOrderId));
   console.log("selectedOrder: ", selectedOrder);
 
+  useEffect(() => {
+  if (viewMode === 'detail' && selectedOrder && (selectedOrder.dspAssigned || selectedOrder.dsp)) {
+    const dspId = selectedOrder.dspAssigned || selectedOrder.dsp?.id || selectedOrder.dsp;
+    socketRef.current = io("http://localhost:5000");
+
+    socketRef.current.on('connect', () => {
+      console.log("connected to backend");
+    });
+
+    socketRef.current.on(`dsp-location-${dspId}`, (data) => {
+      console.log("Received location update:", data);
+      setDspLocation({ lat: data.latitude, lng: data.longitude });
+    });
+
+    return () => {
+      socketRef.current.disconnect();
+    };
+  }
+}, [viewMode, selectedOrder]);
+
+
+  useEffect(() => {
+  if (dspLocation) {
+    console.log("dspLocation updated:", dspLocation);
+  }
+}, [dspLocation]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -319,6 +400,8 @@ function App() {
       </div>
     );
   }
+
+  
 
   return (
     <div className="flex flex-col h-screen bg-gray-100 dark:bg-gradient-to-br dark:from-slate-900 dark:via-blue-950 dark:to-slate-900 font-sans antialiased">
@@ -349,10 +432,22 @@ function App() {
         <div className="flex flex-1 h-screen">
           {/* Map placeholder */}
           <div className="w-full md:w-1/2 flex items-center justify-center bg-gray-200 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-700">
-             <OrderMapView
-              customerLocation={selectedOrder.customerLocation}
-              merchantLocation={selectedOrder.dsp?.location}
-            />
+            <OrderMapView
+  customerLocation={
+    typeof selectedOrder.deliveryLocation === 'object'
+      ? selectedOrder.deliveryLocation
+      : null
+  }
+  merchantLocation={
+    selectedOrder.items &&
+    selectedOrder.items[0] &&
+    selectedOrder.items[0].merchant &&
+    selectedOrder.items[0].merchant.location
+      ? selectedOrder.items[0].merchant.location
+      : null
+  }
+  dspLocation={dspLocation}
+/>
           </div>
           {/* Order details */}
           <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-6">

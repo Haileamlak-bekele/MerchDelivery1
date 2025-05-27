@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const {addUser, getAllUsers, getUserById,DeleteUser,updateUser, loginUser, getActiveDsps} = require('../controllers/users.controller.js');
+const {addUser, getAllUsers, getUserById,DeleteUser,updateUser, loginUser, getActiveDsps,logoutUser} = require('../controllers/users.controller.js');
 const { uploadLicenseImage } = require('../middleware/Licence.js');
 
 // Configure multer for file upload
@@ -25,10 +25,11 @@ router.post(
     addUser
 );
 // router.get('/getAllUsers', getAllUsers);
-// router.get('/getUserById/:id', getUserById);
+router.get('/getUserById/:id', getUserById);
 // router.put('/updateUser/:id', updateUser);
 // router.delete('/deleteUser/:id', DeleteUser);
 router.post('/login', loginUser);
 router.get('/dsps/getActiveDsps', getActiveDsps);
+router.post('/logout', logoutUser);
 
 module.exports = router;
