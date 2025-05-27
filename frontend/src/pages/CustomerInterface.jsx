@@ -78,6 +78,7 @@ export default function App() {
     return <CustomersPage />;
 }
 
+
 // --- Customers Page Component ---
 export function CustomersPage() {
   // Integrate backend hook
@@ -821,6 +822,7 @@ function ProductGrid({ products, onProductSelect, onSaveToggle, savedItems, onAd
 // Product Card Component - Themed
 function ProductCard({ product, onSelect, onSaveToggle, isSaved, onAddToCart }) {
   const [isAnimatingHeart, setIsAnimatingHeart] = useState(false);
+   const navigate = useNavigate();
 
   const handleHeartClick = (e) => {
       e.stopPropagation();
@@ -835,16 +837,20 @@ function ProductCard({ product, onSelect, onSaveToggle, isSaved, onAddToCart }) 
     onAddToCart(product);
   };
 
+
   return (
     // Theme-aware card styles
-    <div className="bg-white dark:bg-gray-800/60 backdrop-blur-sm rounded-lg shadow-md overflow-hidden hover:shadow-lg dark:hover:shadow-emerald-900/40 transition-all duration-300 ease-in-out group flex flex-col border border-gray-200 dark:border-gray-700/50 hover:border-emerald-300 dark:hover:border-emerald-700/50">
+    <div 
+    onClick={() => navigate(`/productDetail/${product._id}`)}
+    className="bg-white dark:bg-gray-800/60 backdrop-blur-sm rounded-lg shadow-md overflow-hidden hover:shadow-lg dark:hover:shadow-emerald-900/40 transition-all duration-300 ease-in-out group flex flex-col border border-gray-200 dark:border-gray-700/50 hover:border-emerald-300 dark:hover:border-emerald-700/50">
       {/* Image Section */}
       <div className="relative">
         <img
           src={getImageUrl(product.image)}
+          
           alt={product.name}
           className="w-full h-48 object-cover cursor-pointer group-hover:scale-105 transition-transform duration-300"
-          onClick={() => onSelect(product)}
+          
           onError={(e) => { 
             console.error('Image failed to load:', product.image);
             console.error('Attempted URL:', e.target.src);

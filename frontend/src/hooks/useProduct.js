@@ -16,6 +16,7 @@ export const useProduct = () => {
   const [currentProduct, setCurrentProduct] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedProduct,setSelectedProduct] = useState(null)
 
   // Fetch products function (so you can call it after add/update)
   const fetchAndSetProducts = async () => {

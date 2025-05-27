@@ -13,6 +13,7 @@ import CheckoutPage from './components/checkout.jsx';
 import MerchantInventoryPage from './pages/MerchantInventoryPage.jsx';
 import OrdersPage from './pages/merchant/OrdersPage.jsx';
 import AdminsPage from './pages/AdminDashboard.jsx';
+import ProductDetailPage from './pages/ProductDetailPage.jsx';
 
 function AuthWrapper({ role }) {
   // Redirect based on role
@@ -64,14 +65,6 @@ export default function AppRouter() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-100 dark:bg-slate-900 transition-colors duration-300 font-sans">
-        <button
-          onClick={() => setIsDarkMode(!isDarkMode)}
-          className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-md border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          aria-label="Toggle Theme"
-        >
-          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
-
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<AuthPage />} />
@@ -85,6 +78,8 @@ export default function AppRouter() {
           <Route path="/admin" element={<AdminsPage />} />
           <Route path="/redirect" element={<AuthWrapper role={localStorage.getItem('userRole')} />} />
           <Route path="*" element={<Navigate to="/" />} />
+          <Route path="/productDetail/:productId" element={<ProductDetailPage />} />
+     
         </Routes>
       </div>
     </Router>

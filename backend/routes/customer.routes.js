@@ -5,7 +5,7 @@ const { getAllProducts, getProductDetails, addToCart, viewCart, placeOrder, view
 
 const router = express.Router();
 router.get('/allProducts', authenticate, getAllProducts);
-router.get('/products/:id', authenticate, getProductDetails);
+router.get('/products/:id', getProductDetails);
 router.post('/addToCart', authenticate, addToCart); // Route to add product to cart
 router.get('/viewCart', authenticate, viewCart); // Route to view cart
 router.delete('/cart/:cartItemId', authenticate, removeFromCart);
