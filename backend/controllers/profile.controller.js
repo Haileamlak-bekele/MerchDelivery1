@@ -4,7 +4,7 @@ const Dsp = require("../src/config/model/DSP.model.js");
 
 // Get current merchant profile
 const getMyProfile = async (req, res) => {
-  const merchant = await Merchant.findOne({ userId: req.user._id });
+  const merchant = await Merchant.findOne({ userId: req.user._id }).populate('userId', 'name email phoneNumber');
   if (!merchant) return res.status(404).json({ message: "Merchant profile not found" });
   res.json(merchant);
 };

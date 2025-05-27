@@ -20,7 +20,7 @@ const viewAllOrders = async (req, res) => {
             'items.product': { $in: merchantProducts.map(product => product._id) }
         })
         .populate('customer', 'name email phoneNumber')
-        .populate('items.product', 'name price merchantId')
+        .populate('items.product', 'name price merchantId image')
         .populate('dspAssigned', 'name email phoneNumber')
         .populate('items.product.merchantId', 'storeName location');
 

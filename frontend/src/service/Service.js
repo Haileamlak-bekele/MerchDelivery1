@@ -46,3 +46,23 @@ export const fetchPlatformStats = async () => {
     throw error; // Re-throw the error to handle it in the component
   }
 };
+
+export const fetchPaymentAccount = async (userId) => {
+  try {
+    const response = await api.get(`/payment-accounts/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching payment account:', error);
+    throw error;
+  }
+};
+
+export const fetchTransactionsByAccountId = async (accountId) => {
+  try {
+    const response = await api.get(`/payment-accounts/transactions/${accountId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    throw error;
+  }
+};

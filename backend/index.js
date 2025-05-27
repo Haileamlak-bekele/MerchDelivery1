@@ -12,7 +12,13 @@ const merchantRoutes = require("./routes/merchant.routes.js");
 const dspRoutes = require("./routes/dsp.routes.js");
 const customersRoutes = require("./routes/customer.routes.js");
 const orderRoutes = require("./routes/order.routes.js");
+<<<<<<< HEAD
 const messagesRoutes = require("./routes/message.routes");
+=======
+const FeedbackRoutes = require("./routes/FeedBackRoute.js")
+const paymentAccountRoutes = require("./routes/paymentAccount.routes.js");
+const complaintRoutes = require('./routes/complaints');
+>>>>>>> bac9c6b4dab1a0c8bf7912530b9d112db111e959
 
 dotenv.config();
 dbConnect();
@@ -56,6 +62,9 @@ app.use("/dsp", dspRoutes);
 app.use("/customers", customersRoutes);
 app.use("/orders", orderRoutes);
 app.use("/messages", messagesRoutes);
+app.use("/feedback",FeedbackRoutes)
+app.use("/payment-accounts", paymentAccountRoutes);
+app.use('/complaints', complaintRoutes);
 
 // --- SOCKET.IO LOGIC HERE ---
 app.set('io', io); // Make io available in the app

@@ -4,8 +4,8 @@ const { authenticate } = require('../middleware/auth.middleware.js'); // Authent
 const { getAllProducts, getProductDetails, addToCart, viewCart, placeOrder, viewOrderDetails, confirmOrder, removeFromCart, getOrdersByCustomerId,DspAcceptOrder,DspOnShipping,DspRejectOrder,reassignDsp,customerOrderDelivered} = require('../controllers/customer.controller.js'); // Import the controller function
 
 const router = express.Router();
-router.get('/allProducts', authenticate, getAllProducts);
-router.get('/products/:id', authenticate, getProductDetails);
+router.get('/allProducts', getAllProducts);
+router.get('/products/:id', getProductDetails);
 router.post('/addToCart', authenticate, addToCart); // Route to add product to cart
 router.get('/viewCart', authenticate, viewCart); // Route to view cart
 router.delete('/cart/:cartItemId', authenticate, removeFromCart);

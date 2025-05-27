@@ -18,7 +18,26 @@ import {
   UserCircle,
   MessageSquare
 } from 'lucide-react';
+import { API_BASE_URL } from '../../config';
 
+function getImageUrl(imagePath, baseUrl = API_BASE_URL) {
+  if (!imagePath) {
+    return 'https://placehold.co/64x64';
+  }
+  if (imagePath.startsWith('http')) {
+    return imagePath;
+  }
+  if (imagePath.startsWith('/uploads')) {
+    return `${baseUrl}${imagePath}`;
+  }
+  let normalizedPath = imagePath
+    .replace(/\\/g, '/')
+    .replace(/\/+/g, '/')
+    .replace(/^[/.]+/, '')
+    .replace(/^uploads/, '/uploads')
+    .replace(/^\/?/, '/');
+  return `${baseUrl}${normalizedPath}`;
+}
 export default function OrdersPage() {
   const { orders, loading, error, confirmOrder } = useMerchantOrders();
   const order1 = orders || []; // Ensure orders is always an array
@@ -36,11 +55,6 @@ export default function OrdersPage() {
       .then(setActiveDsps)
       .catch(console.error);
   }, []);
-
-  // Dummy logout handler
-  const handleLogout = () => {
-    alert('Logged out!');
-  };
 
   const handleViewOrder = (order) => {
     setSelectedOrder(order);
@@ -123,7 +137,6 @@ export default function OrdersPage() {
       <Sidebar
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
-        handleLogout={handleLogout}
       />
       {/* Main Content */}
       <div className="flex-1 p-4 md:p-6 lg:p-8">
@@ -320,8 +333,16 @@ function OrderDetailsModal({ isOpen, onClose, order, onConfirm, inventoryItems, 
                 const isOutOfStock = inventoryItem && availableStock === 0;
 
                 return (
-                  <li key={index} className="p-3 bg-gray-700/50 rounded-md border border-gray-600/70 flex justify-between items-center">
-                    <div>
+                  <li key={index} className="p-3 bg-gray-700/50 rounded-md border border-gray-600/70 flex items-center gap-4">
+                    <div className="flex-shrink-0 w-16 h-16">
+                    <img
+                                src={getImageUrl(item.product?.image)}
+                                alt={item.product?.name || 'Product'}
+                                className="w-16 h-16 object-cover rounded-md border border-gray-300 dark:border-gray-700 mr-4 bg-white"
+                                onError={e => { e.target.onerror = null; e.target.src = 'https://placehold.co/64x64'; }}
+                              />
+                    </div>
+                    <div className="flex-grow">
                       <p className="font-medium text-white">{item.product?.name || 'Product'} (x{item.quantity})</p>
                       <p className="text-sm text-gray-400">Price per unit: ${item.product?.price?.toFixed(2) || '0.00'}</p>
                     </div>
@@ -337,7 +358,8 @@ function OrderDetailsModal({ isOpen, onClose, order, onConfirm, inventoryItems, 
                           )}
                         </>
                       ) : (
-                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-500/20 text-gray-300">Info N/A</span>
+                        <></>
+                        // <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-500/20 text-gray-300">Info N/A</span>
                       )}
                     </div>
                   </li>
@@ -354,7 +376,34 @@ function OrderDetailsModal({ isOpen, onClose, order, onConfirm, inventoryItems, 
               </div>
             )}
           </div>
+          <div className="mt-4">
+    <label className="block text-sm font-medium text-gray-300 mb-1">Assign DSP:</label>
+    <select
+      className="w-full rounded-md p-2 bg-gray-700 text-white"
+      value={selectedDspId}
+      onChange={e => setSelectedDspId(e.target.value)}
+    >
+      <option value="">Select DSP</option>
+      {activeDsps && activeDsps.length > 0 ? (
+        activeDsps.map(dsp => (
+          <option key={dsp._id} value={dsp._id}>
+            {dsp.name} ({dsp.email})
+          </option>
+        ))
+      ) : (
+        <option disabled>No active DSPs available</option>
+      )}
+    </select>
+    <button
+      className="mt-2 px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700"
+      onClick={() => handleAssignDsp(order._id, selectedDspId)}
+      disabled={!selectedDspId}
+    >
+      Assign DSP
+    </button>
+  </div>
         </div>
+
         {order.orderStatus === 'CONFIRMED' && (
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-300 mb-1">Assign DSP:</label>
@@ -383,6 +432,7 @@ function OrderDetailsModal({ isOpen, onClose, order, onConfirm, inventoryItems, 
             </button>
           </div>
         )}
+
 
         <div className="flex justify-end items-center pt-5 border-t border-gray-700/60 mt-auto space-x-3 sticky bottom-0 bg-gray-800 p-6 -mx-0 -mb-0 rounded-b-lg">
           <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700/70 rounded-md hover:bg-gray-600/70 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition duration-150 ease-in-out">
