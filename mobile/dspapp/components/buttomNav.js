@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import profile from '../screens/ProfileScreen'; // Importing ProfileScreen for navigation
 
 const BottomNavbar = () => {
   const navigation = useNavigation();
@@ -20,6 +21,7 @@ const BottomNavbar = () => {
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+        {/* Ensure 'Profile' matches the name used in your navigation stack */}
         <Text style={styles.navItem}>👤 Profile</Text>
       </TouchableOpacity>
     </View>

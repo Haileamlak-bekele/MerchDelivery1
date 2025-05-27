@@ -185,6 +185,20 @@ const loginUser = async (req, res) => {
   }
 };
 
+//logout user
+const logoutUser = async (req, res) => {
+  try {
+    const userId = req.body.userId || req.user.id;
+    console.log("User ID for logout:", userId);
+    await users.findByIdAndUpdate(userId, {
+      isActive: false,
+      lastActive: new Date()
+    });
+    res.json({ message: "User logged out successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
 
 // Get all currently active DSPs
 const getActiveDsps = async (req, res) => {
@@ -210,18 +224,18 @@ const getActiveDsps = async (req, res) => {
 //     }
 // }
 
-// const getUserById = async (req, res) => {
-//     try {
-//         const userId = req.params.id;
-//         const user = await users.findById(userId);
-//         if (!user) {
-//             return res.status(404).json({ message: 'User not found' });
-//         }
-//         res.status(200).json(user);
-//     } catch (error) {
-//         res.status(500).json({ message: 'Error fetching user', error });
-//     }
-// }
+const getUserById = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const user = await users.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching user', error });
+    }
+}
 
 // const updateUser = async (req, res) => {
 //     try {
@@ -253,9 +267,10 @@ const getActiveDsps = async (req, res) => {
 module.exports = {
   addUser,
   // getAllUsers,
-  // getUserById,
+  getUserById,
   // updateUser,
   // DeleteUser,
   loginUser,
   getActiveDsps,
+  logoutUser,
 };

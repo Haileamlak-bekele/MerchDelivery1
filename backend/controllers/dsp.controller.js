@@ -10,19 +10,29 @@ const updateLocation = async (req, res) => {
   const { latitude, longitude } = req.body;
 
   try {
-    // Retrieve userId from the authenticated user (set by auth middleware)
     const userId = req.user.id;
 
     if (typeof latitude !== 'number' || typeof longitude !== 'number') {
       return res.status(400).json({ error: 'Latitude and longitude are required and must be numbers' });
     }
+    console.log(userId);
 
-    // Update or create the DSP location document for this user
     const updated = await DspLocation.findOneAndUpdate(
       { userId },
       { latitude, longitude, updatedAt: Date.now() },
       { upsert: true, new: true }
     );
+
+    // --- Emit location update to customers tracking this DSP ---
+    // Get io from req.app
+    const io = req.app.get('io');
+    // Optionally, you can emit to a room for this DSP or all customers
+    io.emit(`dsp-location-${userId}`, {
+      dspId: userId,
+      latitude,
+      longitude,
+      updatedAt: updated.updatedAt,
+    });
 
     res.status(200).json({ message: 'Location updated', location: updated });
   } catch (err) {

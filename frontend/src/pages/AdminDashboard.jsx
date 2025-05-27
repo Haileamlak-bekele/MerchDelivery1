@@ -33,9 +33,10 @@ import DSPDetailModal from '../components/DSPDetailModal';
 
 import { useUsers } from '../hooks/useUsers';
 import DeliveryPriceSection from '../components/DeliveryPriceSection';
+import ComplaintsSection from '../components/ComplaintsSection';
 import { fetchPlatformStats } from '../service/Service';
 import { deleteUsers } from '../service/User';
-
+import { useNavigate } from 'react-router-dom';
 // Main App component
 export default function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -100,6 +101,13 @@ function AdminDashboard({ darkMode, setDarkMode }) {
     { id: 2, title: 'System update', message: 'Scheduled maintenance tonight', time: '1 hour ago', read: true },
     { id: 3, title: 'New user registered', message: 'John Doe joined the platform', time: '3 hours ago', read: true },
   ];
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('userRole');
+    navigate('/auth');
+  };
 
   // Function to render the content based on the active section
   const renderSection = () => {
@@ -118,6 +126,8 @@ function AdminDashboard({ darkMode, setDarkMode }) {
         return <DeliveriesSection />;
       case 'settings':
         return <SettingsSection />;
+      case 'complains':
+        return <ComplaintsSection />;
       default:
         return <OverviewSection deliveryData={deliveryData} userGrowthData={userGrowthData} pieData={pieData} />;
     }
@@ -131,7 +141,8 @@ function AdminDashboard({ darkMode, setDarkMode }) {
     { id: 'dsp', label: 'DSP', icon: Users },
     { id: 'delivery-prices', label: 'Delivery Prices', icon: Users },
     { id: 'deliveries', label: 'Deliveries', icon: Truck },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'complains', label: 'complains', icon: Truck },
+    { id: 'Settings', label: 'Settings', icon: Settings },,
   ];
 
   // Toggle dark mode
@@ -308,7 +319,7 @@ function AdminDashboard({ darkMode, setDarkMode }) {
                   </div>
                   <div className="py-1 border-t border-gray-200 dark:border-gray-700">
                     <button
-                      onClick={() => {}}
+                      onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       Sign out

@@ -5,6 +5,8 @@ const user = require("../src/config/model/Users.model.js");
 const User = require("../src/config/model/Users.model.js");
 const Cart = require("../src/config/model/Cart.model.js");
 const Order = require("../src/config/model/Order.model.js");
+const PaymentAccount = require("../src/config/model/PaymentAccount.model.js");
+const PaymentAccountController = require("./paymentAccount.controller.js");
 
 
 //Get all products for customers
@@ -89,8 +91,8 @@ const viewOrderDetails = async (req, res) => {
   try {
     const { orderId } = req.params;
     const order = await Order.findById(orderId)
+      .populate('items.product', 'name image price')
       .populate('customer', 'name email phoneNumber')
-      .populate('items.product', 'name price merchantId')
       .populate('items.product.merchantId', 'storeName location');
 
     if (!order) {
@@ -133,6 +135,8 @@ const confirmOrder = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+
 // Place an order
 const placeOrder = async (req, res) => {
   try {
@@ -185,9 +189,10 @@ const placeOrder = async (req, res) => {
         const merchant1 = await merchant.findById(item.product.merchantId);
         if (merchant1) {
           merchantInfo = {
-            _id: merchant._id,
+            _id: merchant1._id,
             storeName: merchant1.storeName,
             location: merchant1.location,
+            userId: merchant1.userId,
           };
         }
       }
@@ -198,34 +203,47 @@ const placeOrder = async (req, res) => {
       };
     }));
 
-    // Create an order record
+    // Create the order
     const order = new Order({
       customer: customerId,
-      items: itemsWithMerchant.map(item => ({
-        product: item.product,
-        quantity: item.quantity,
-        merchant: item.merchant, // Attach merchant info to each item
-      })),
-      totalAmount: totalAmount,
+      items: itemsWithMerchant,
+      totalAmount,
       deliveryLocation,
       paymentDetails: {
         amount: paymentPrice,
-        status: 'COMPLETED'
+        status: 'COMPLETED',
       },
-      orderStatus: 'PENDING'
+      orderStatus: 'PENDING',
     });
-
     await order.save();
 
-    // Clear the customer's cart
+    // CREDIT payment to merchant's account and create transaction for each merchant
+    for (const item of itemsWithMerchant) {
+      if (item.merchant && item.merchant.userId) {
+        // Find merchant's payment account
+        const merchantAccount = await PaymentAccount.findOne({ userId: item.merchant.userId, accountType: 'merchant' });
+        if (merchantAccount) {
+          console.log('Placing order for merchant:', item.merchant._id, 'account:', merchantAccount?._id, 'amount:', item.quantity * (cartItems.find(ci => ci.product._id.equals(item.product)).product.price));
+          await PaymentAccountController.createTransaction({
+            accountId: merchantAccount._id,
+            amount: item.quantity * (cartItems.find(ci => ci.product._id.equals(item.product)).product.price),
+            type: 'credit',
+            reason: 'Order Payment',
+            from: customerId,
+            to: item.merchant._id,
+            reference: order._id,
+            referenceModel: 'Order',
+          });
+        }
+      }
+    }
+
+    // Clear the cart
     await Cart.deleteMany({ customer: customerId });
 
-    res.status(201).json({ 
-      message: 'Order placed successfully', 
-      order,
-      nextSteps: 'Please confirm your order to proceed with delivery'
-    });
+    res.status(201).json({ message: 'Order placed successfully', order });
   } catch (error) {
+    console.error('Error in placeOrder:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -258,11 +276,116 @@ const assignDsp = async (req, res) => {
     }
 
     order.dspAssigned = dspId;
+
+    // If the order is CONFIRMED, update status to DspAssigned
+    if (order.orderStatus === 'CONFIRMED') {
+      order.orderStatus = 'DspAssigned';
+    }
+
     await order.save();
 
     res.status(200).json({ message: 'DSP assigned successfully', order });
   } catch (error) {
     console.error('Error in assignDsp:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+//dsp accepts order reqest
+const DspAcceptOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+   // change order status to DspAccepted
+    order.orderStatus = 'DspAccepted';
+    await order.save();
+    res.status(200).json({ message: 'Order accepted by DSP', order });
+  }
+  catch (error) {
+    console.error('Error in DspAcceptOrder:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+// DSP rejects order request
+const DspRejectOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    // Change order status to DspRejected
+    order.orderStatus = 'DspRejected';
+    await order.save();
+    res.status(200).json({ message: 'Order rejected by DSP', order });
+  }
+  catch (error) {
+    console.error('Error in DspRejectOrder:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// DSP marks order as on shipping
+const DspOnShipping = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    // Change order status to OnShipping
+    order.orderStatus = 'OnShipping';
+    await order.save();
+    res.status(200).json({ message: 'Order marked as on shipping by DSP', order });
+  }
+  catch (error) {
+    console.error('Error in DspOnShipping:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+}
+//Customer changes order status to delivered
+const customerOrderDelivered = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    // Change order status to DELIVERED
+    order.orderStatus = 'DELIVERED';
+    await order.save();
+    res.status(200).json({ message: 'Order marked as delivered', order });
+  }
+  catch (error) { 
+    console.error('Error in customerOrderDelivered:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+//Reassign order to another Dsp
+const reassignDsp = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { newDspId } = req.body;
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    // Reassign the DSP
+    order.dspAssigned = newDspId;
+    // if the order status is rejected, change it to DspAssigned
+    if (order.orderStatus === 'DspRejected') {
+      order.orderStatus = 'DspAssigned';
+    }
+    await order.save();
+    res.status(200).json({ message: 'Order reassigned to new DSP successfully', order });
+  }
+  catch (error) {
+    console.error('Error in reassignDsp:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -301,4 +424,9 @@ module.exports = {
   removeFromCart,
   assignDsp,
   getOrdersByCustomerId,
+  DspAcceptOrder,
+  DspRejectOrder,
+  DspOnShipping,
+  customerOrderDelivered,
+  reassignDsp,
 };

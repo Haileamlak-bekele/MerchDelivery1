@@ -4,6 +4,7 @@ import { useCustomerShop } from '../hooks/useCustomerShop';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
 import CustomerTrackingOrders from '../components/CustomerTrackingPage';
+import ProductShowcase from '../components/Product/ProductShowcase';
 
 // --- Constants ---
 const TAX_RATE = 0.15; // 15% Tax Rate
@@ -310,10 +311,8 @@ export function CustomersPage() {
             {/* Separator */}
             <hr className="my-8 border-gray-300 dark:border-gray-700/50" />
 
-            {/* All Products Section Title */}
-            <h2 className="text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-6">All Products</h2>
-            {/* Product Grid */}
-            <ProductGrid
+            {/* All Products Section */}
+            <ProductShowcase
               products={filteredProducts}
               onProductSelect={handleProductSelect}
               onSaveToggle={handleSaveToggle}
@@ -633,7 +632,7 @@ function CartPopover({ cartItems, onClose, onRemove, onUpdateQuantity }) {
                         className="w-12 px-1 py-0.5 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded text-xs text-center text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
                   </div>
-                   <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-1">${((item.product?.price || 0) * item.quantity).toFixed(2)}</p>
+                   <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-1">${typeof ((item.product?.price || 0) * item.quantity) === 'number' ? ((item.product?.price || 0) * item.quantity).toFixed(2) : '0.00'}</p>
                 </div>
                 <button onClick={() => { console.log('Remove button clicked for cart item:', item._id); onRemove(item._id); }} className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                   <Trash2 className="w-4 h-4" />
@@ -650,7 +649,7 @@ function CartPopover({ cartItems, onClose, onRemove, onUpdateQuantity }) {
           <div className="space-y-1 text-sm mb-3">
             <div className="flex justify-between text-gray-700 dark:text-gray-300">
               <span>Subtotal:</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>${typeof subtotal === 'number' ? subtotal.toFixed(2) : '0.00'}</span>
             </div>
           </div>
           <button
@@ -678,7 +677,7 @@ function CartPopover({ cartItems, onClose, onRemove, onUpdateQuantity }) {
 
 
 // Filter Sidebar Component - Themed
-function FilterSidebar({ categories, colors, activeFilters, onFilterChange, isOpen, onClose }) {
+function FilterSidebar({ categories,  activeFilters, onFilterChange, isOpen, onClose }) {
   const [openSections, setOpenSections] = useState({ category: true, color: true });
 
   const toggleSection = (section) => {
@@ -721,28 +720,6 @@ function FilterSidebar({ categories, colors, activeFilters, onFilterChange, isOp
                   <label key={category} className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700/50">
                     <input type="radio" name="category" value={category} checked={activeFilters.category === category} onChange={() => handleRadioChange('category', category)} className="form-radio h-4 w-4 text-emerald-600 dark:text-emerald-500 bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 focus:ring-emerald-500 transition duration-150 ease-in-out cursor-pointer"/>
                     <span>{category}</span>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Color Filter */}
-          <div className="mb-6">
-            <button onClick={() => toggleSection('color')} className="w-full flex justify-between items-center text-left font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2 focus:outline-none">
-              <span>Color</span>
-               {openSections.color ? <ChevronUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
-            {openSections.color && (
-              <div className="space-y-1 pl-2 border-l border-gray-300 dark:border-gray-700 ml-1">
-                <label className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700/50">
-                   <input type="radio" name="color" value="" checked={!activeFilters.color} onChange={() => onFilterChange('color', '')} className="form-radio h-4 w-4 text-emerald-600 dark:text-emerald-500 bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 focus:ring-emerald-500 transition duration-150 ease-in-out cursor-pointer"/>
-                   <span>All Colors</span>
-                 </label>
-                {colors.map(color => (
-                  <label key={color} className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700/50">
-                    <input type="radio" name="color" value={color} checked={activeFilters.color === color} onChange={() => handleRadioChange('color', color)} className="form-radio h-4 w-4 text-emerald-600 dark:text-emerald-500 bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 focus:ring-emerald-500 transition duration-150 ease-in-out cursor-pointer"/>
-                    <span>{color}</span>
                   </label>
                 ))}
               </div>
@@ -949,7 +926,7 @@ function ProductDetailModal({ product, onClose, onAddToCart }) {
                         {renderRatingStars(product.rating)}
                         <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">({product.rating.toFixed(1)} rating)</span>
                     </div>
-                    <p className="text-3xl lg:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400 mb-5">${product.price.toFixed(2)}</p>
+                    <p className="text-3xl lg:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400 mb-5">${typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}</p>
                     <h3 className="text-md font-semibold text-gray-800 dark:text-gray-200 mb-1">Description</h3>
                     <p className="text-sm text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">{product.description}</p>
                     {/* Action Buttons - Theme-aware */}
