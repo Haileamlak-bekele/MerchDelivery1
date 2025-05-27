@@ -13,6 +13,7 @@ import CheckoutPage from './components/checkout.jsx';
 import MerchantInventoryPage from './pages/MerchantInventoryPage.jsx';
 import OrdersPage from './pages/merchant/OrdersPage.jsx';
 import AdminsPage from './pages/AdminDashboard.jsx';
+import ChatPage  from './components/ChatPage.jsx';
 
 function AuthWrapper({ role }) {
   // Redirect based on role
@@ -83,6 +84,7 @@ export default function AppRouter() {
           <Route path='/order' element={<CheckoutPage />} />
           <Route path='/orders' element={<OrdersPage />} />
           <Route path="/admin" element={<AdminsPage />} />
+          <Route path="/chat/:merchantId/:dspId" element={<ChatPage />} />
           <Route path="/redirect" element={<AuthWrapper role={localStorage.getItem('userRole')} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

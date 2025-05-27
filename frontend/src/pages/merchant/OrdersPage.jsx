@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMerchantOrders } from '../../hooks/useMerchantOrders';
-// import { useInventory } from '../../hooks/useInventory';
 import Sidebar from '../../components/Sidebar';
 import {
   ShoppingCart,
@@ -14,15 +15,18 @@ import {
   X,
   AlertCircle,
   Menu,
-  UserCircle
+  UserCircle,
+  MessageSquare
 } from 'lucide-react';
 
 export default function OrdersPage() {
   const { orders, loading, error, confirmOrder } = useMerchantOrders();
-  // const { inventoryItems } = useInventory();
+  const order1 = orders || []; // Ensure orders is always an array
+  console.log(order1);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const navigate = useNavigate();
 
   // Fetch active DSPs
   const [activeDsps, setActiveDsps] = useState([]);
@@ -30,7 +34,7 @@ export default function OrdersPage() {
     fetch('http://localhost:5000/users/dsps/getActiveDsps')
       .then(res => res.json())
       .then(setActiveDsps)
-      .catch(console.error)
+      .catch(console.error);
   }, []);
 
   // Dummy logout handler
@@ -41,6 +45,12 @@ export default function OrdersPage() {
   const handleViewOrder = (order) => {
     setSelectedOrder(order);
     setIsOrderModalOpen(true);
+  };
+
+  const handleChatWithDsp = (order) => {
+    const dspId = typeof order.dspAssigned === 'object' ? order.dspAssigned._id : order.dspAssigned;
+    const merchantId = order.items[0]?.product.merchantId || 'merchant123'; // Replace with actual merchantId source
+    navigate(`/chat/${merchantId}/${dspId}`);
   };
 
   const handleConfirmOrder = async (orderId) => {
@@ -176,6 +186,15 @@ export default function OrdersPage() {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
+                          {order.dspAssigned && (
+                            <button
+                              onClick={() => handleChatWithDsp(order)}
+                              className="text-emerald-400 hover:text-emerald-300 p-1.5 rounded-md hover:bg-emerald-500/20 transition duration-150 ease-in-out"
+                              title={`Chat with ${typeof order.dspAssigned === 'object' ? order.dspAssigned.name : 'DSP'}`}
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -184,7 +203,7 @@ export default function OrdersPage() {
               </table>
             </div>
           </div>
-          {/* Modal */}
+          {/* Order Details Modal */}
           {isOrderModalOpen && selectedOrder && (
             <OrderDetailsModal
               isOpen={isOrderModalOpen}

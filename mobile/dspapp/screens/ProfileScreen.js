@@ -12,7 +12,7 @@ const ProfileScreen = ({ navigation }) => {
       try {
         const token = await AsyncStorage.getItem('token');
         // 1. Fetch DSP profile
-        const res = await fetch('http://192.168.137.1:5000/dsp/profile', {
+        const res = await fetch('http://192.168.188.105:5000/dsp/profile', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -23,7 +23,7 @@ const ProfileScreen = ({ navigation }) => {
         if (res.ok && dspData.userId) {
           setProfile(dspData);
           // 2. Fetch user profile using userId from DSP profile
-          const userRes = await fetch(`http://192.168.137.1:5000/users/getUserById/${dspData?.userId}`, {
+          const userRes = await fetch(`http://192.168.188.105:5000/users/getUserById/${dspData?.userId}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
@@ -87,7 +87,7 @@ const ProfileScreen = ({ navigation }) => {
       const token = await AsyncStorage.getItem('token');
       const userId = user?._id; // get user ID from loaded user profile
       // Send userId in the request body
-      const res = await fetch(`http://192.168.137.1:5000/users/logout`, {
+      const res = await fetch(`http://192.168.188.105:5000/users/logout`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

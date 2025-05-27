@@ -15,7 +15,7 @@ const DSPDashboard = () => {
     const fetchOrders = async () => {
       try {
         const token = await AsyncStorage.getItem('token');
-        const res = await fetch('http://192.168.137.1:5000/dsp/orders', {
+        const res = await fetch('http://192.168.188.105:5000/dsp/orders', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -52,7 +52,7 @@ const DSPDashboard = () => {
   const handleAccept = async (orderId) => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await fetch(`http://192.168.137.1:5000/orders/${orderId}/dsp-accept`, {
+      const res = await fetch(`http://192.168.188.105:5000/orders/${orderId}/dsp-accept`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -79,7 +79,7 @@ const DSPDashboard = () => {
   const handleReject = async (orderId) => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await fetch(`http://192.168.137.1:5000/orders/${orderId}/dsp-reject`, {
+      const res = await fetch(`http://192.168.188.105:5000/orders/${orderId}/dsp-reject`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -101,7 +101,7 @@ const DSPDashboard = () => {
   const handleCompleteDelivery = async (orderId) => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await fetch(`http://192.168.137.1:5000/orders/${orderId}/delivered`, {
+      const res = await fetch(`http://192.168.188.105:5000/orders/${orderId}/delivered`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -219,7 +219,7 @@ const DSPDashboard = () => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.chatButton}
-                  onPress={() => console.log('Chat with Customer')}
+                  onPress={() => navigation.navigate('Chat',{ merchantId: order.items[0].product?.merchantId, dspId: order.dspAssigned })}
                 >
                   <Text style={styles.buttonText}>💬 Chat</Text>
                 </TouchableOpacity>
@@ -228,7 +228,7 @@ const DSPDashboard = () => {
   onPress={async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await fetch(`http://192.168.137.1:5000/orders/${order._id}/dsp-on-shipping`, {
+      const res = await fetch(`http://192.168.188.105:5000/orders/${order._id}/dsp-on-shipping`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
