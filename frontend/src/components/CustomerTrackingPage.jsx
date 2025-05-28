@@ -7,6 +7,8 @@ import {
 import { GoogleMap, LoadScript, DirectionsRenderer,Marker } from '@react-google-maps/api';
 import { API_BASE_URL } from '../config'; // <-- Add this import
 import { io } from "socket.io-client";
+import ReportModal from '../components/ReportModal'
+import useComplaints from '../hooks/useComplain';
 
 // Mock Data - Replace with API calls in a real application
 
@@ -90,6 +92,26 @@ function OrderStatusIcon({ status, className = "w-6 h-6" }) {
 
 // Update the order display in ActiveOrdersListView
 function ActiveOrdersListView({ orders, onTrackOrder, onShowOrderDetails, onSimulateNewOrder }) {
+ const [selectedOrder, setSelectedOrder] = useState(null);
+ const [isModalOpen, setIsModalOpen] = useState(false);
+const {addComplaint}=useComplaints();
+   const handleReportClick = (order) => {
+    setSelectedOrder(order);
+    setIsModalOpen(true);
+  };
+
+const handleSubmitReport = (reportData) => {
+  const complaint = addComplaint(reportData);
+  if (complaint) {
+    alert('Successfully added complaint');
+  } else {
+    alert('Failed to add complaint');
+  }
+  console.log('Report submitted:', reportData, 'for order:', selectedOrder);
+  // You can add logic here to send the report data to your backend
+};
+
+
   if (!orders || orders.length === 0) {
     // ...existing code...
   }
@@ -113,6 +135,12 @@ function ActiveOrdersListView({ orders, onTrackOrder, onShowOrderDetails, onSimu
           <li key={order.id} className="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700/50 hover:shadow-xl transition-shadow duration-200">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
               <div className="flex-grow mb-3 sm:mb-0">
+               <button 
+                onClick={() => handleReportClick(order)}
+               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+  Report
+</button>
+
                 <div className="flex items-center mb-1">
                   <OrderStatusIcon status={order.status} className="w-7 h-7 mr-3 flex-shrink-0" />
                   <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-100 truncate" title={order.restaurantName}>
@@ -181,6 +209,12 @@ function ActiveOrdersListView({ orders, onTrackOrder, onShowOrderDetails, onSimu
           </li>
         ))}
       </ul>
+            <ReportModal
+        isOpen={isModalOpen}
+        order={selectedOrder}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSubmitReport}
+      />
     </div>
   );
 }

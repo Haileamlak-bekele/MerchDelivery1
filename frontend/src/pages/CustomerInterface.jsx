@@ -6,6 +6,7 @@ import { API_BASE_URL } from '../config';
 import CustomerTrackingOrders from '../components/CustomerTrackingPage';
 import ProductShowcase from '../components/Product/ProductShowcase';
 
+
 // --- Constants ---
 const TAX_RATE = 0.15; // 15% Tax Rate
 const PAGES = { // Define page constants for navigation
@@ -198,24 +199,48 @@ export function CustomersPage() {
   };
 
   // --- INTEGRATION: Add to Cart ---
-  const handleAddToCart = useCallback((productToAdd) => {
-    console.log('Adding to cart:', productToAdd);
-    // Log the full products array for debugging
-    console.log('All products:', products.map(p => ({_id: p._id, id: p.id, name: p.name})));
-    // Find the real product (with _id) from products
-    const backendProduct = products.find(p => p._id === productToAdd._id);
-    if (!backendProduct) {
-      console.error('No matching product found in products array for:', productToAdd);
-      return;
+// --- INTEGRATION: Add to Cart ---
+const handleAddToCart = useCallback(async (productToAdd) => {
+  console.log('Adding to cart (single product):', productToAdd);
+  // Log the full products array for debugging
+  console.log('All products:', products.map(p => ({_id: p._id, id: p.id, name: p.name})));
+
+  // Find the real product (with _id) from products
+  const backendProduct = products.find(p => p._id === productToAdd._id);
+  if (!backendProduct) {
+    console.error('No matching product found in products array for:', productToAdd);
+    setError('Product not found.');
+    return;
+  }
+  console.log('Matched product:', backendProduct);
+
+  // Use backend _id if available, else fallback to id
+  const idToAdd = backendProduct._id || backendProduct.id;
+
+  try {
+    // Step 1: Clear existing cart items
+    console.log('Clearing existing cart items...');
+    for (const item of cart) {
+      await deleteCartItem(item._id);
+      console.log('Removed cart item:', item._id);
     }
-    console.log('Matched product:', backendProduct);
-    // Use backend _id if available, else fallback to id
-    const idToAdd = backendProduct._id || backendProduct.id;
-    addToCart(idToAdd, 1);
+
+    // Step 2: Add the new product to the cart
+    await addToCart(idToAdd, 1);
     console.log('Added to cart (id):', idToAdd);
+
+    // Step 3: Refresh cart data
+    await fetchCart();
+    console.log('Cart refreshed after adding new product.');
+
+    // Step 4: Show the cart popover
     setIsCartOpen(true);
     setTimeout(() => setIsCartOpen(false), 2500);
-  }, [addToCart, products]);
+  } catch (err) {
+    console.error('Error updating cart:', err);
+    setError('Failed to update cart. Please try again.');
+  }
+}, [addToCart, deleteCartItem, fetchCart, products, cart, setError]);
 
   // --- INTEGRATION: Remove from Cart ---
   const handleRemoveFromCart = useCallback((cartItemId) => {

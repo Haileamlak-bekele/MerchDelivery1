@@ -1,13 +1,43 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const ComplaintSchema = new mongoose.Schema({
-  orderId: { type: String, required: true },
-  customer: { type: String, required: true },
-  merchant: { type: String, required: true },
-  dsp: { type: String, required: true },
-  complaint: { type: String, required: true },
-  status: { type: String, enum: ['Pending', 'In Progress', 'Resolved'], default: 'Pending' },
-  date: { type: Date, default: Date.now }
-});
+const complaintSchema = new mongoose.Schema(
+  {
+    OrderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    CustomerId:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    merchantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    dspId: {
+      type: String,
+      ref: "User",
+    },
+    // Other fields related to the complaint
+    description: {
+      type: String,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "resolved", "rejected"],
+      default: "pending",
+    },
+    // Add any other fields as needed
+  },
+  {
+    timestamps: true,
+  }
+);
 
-module.exports = mongoose.model('Complaint', ComplaintSchema);
+const Complaint = mongoose.model("Complaint", complaintSchema);
+
+module.exports = Complaint;
