@@ -33,7 +33,7 @@ const LocationTracker = () => {
           if (!isMounted) return;
           const { latitude, longitude } = location.coords;
 
-          fetch('http://192.168.188.105:5000/dsp/location', {
+          fetch('http://192.168.188.100:5000/dsp/location', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

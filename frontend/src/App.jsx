@@ -13,6 +13,10 @@ import MerchantInventoryPage from './pages/MerchantInventoryPage.jsx';
 import OrdersPage from './pages/merchant/OrdersPage.jsx';
 import AdminsPage from './pages/AdminDashboard.jsx';
 import ChatPage  from './components/ChatPage.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+import ProfilePage from './pages/merchant/ProfilePage.jsx';
+import ProductDetailPage from './pages/ProductDetailPage.jsx';
+import MerchantChatPage from './pages/MechantChatPage.jsx';
 
 function AuthWrapper({ role }) {
   // Redirect based on role
@@ -106,6 +110,8 @@ export default function AppRouter() {
           <Route path='/orders' element={<OrdersPage />} />
           <Route path="/admin" element={<AdminsPage />} />
           <Route path="/chat/:merchantId/:dspId" element={<ChatPage />} />
+          <Route path="/chat/:merchatId/:customerId" element={<ChatPage />} />
+          <Route path='/chat' element={<MerchantChatPage />} />
           <Route
             path="/admin"
             element={

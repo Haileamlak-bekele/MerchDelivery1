@@ -198,24 +198,48 @@ export function CustomersPage() {
   };
 
   // --- INTEGRATION: Add to Cart ---
-  const handleAddToCart = useCallback((productToAdd) => {
-    console.log('Adding to cart:', productToAdd);
-    // Log the full products array for debugging
-    console.log('All products:', products.map(p => ({_id: p._id, id: p.id, name: p.name})));
-    // Find the real product (with _id) from products
-    const backendProduct = products.find(p => p._id === productToAdd._id);
-    if (!backendProduct) {
-      console.error('No matching product found in products array for:', productToAdd);
-      return;
+  // --- INTEGRATION: Add to Cart ---
+const handleAddToCart = useCallback(async (productToAdd) => {
+  console.log('Adding to cart (single product):', productToAdd);
+  // Log the full products array for debugging
+  console.log('All products:', products.map(p => ({_id: p._id, id: p.id, name: p.name})));
+
+  // Find the real product (with _id) from products
+  const backendProduct = products.find(p => p._id === productToAdd._id);
+  if (!backendProduct) {
+    console.error('No matching product found in products array for:', productToAdd);
+    setError('Product not found.');
+    return;
+  }
+  console.log('Matched product:', backendProduct);
+
+  // Use backend _id if available, else fallback to id
+  const idToAdd = backendProduct._id || backendProduct.id;
+
+  try {
+    // Step 1: Clear existing cart items
+    console.log('Clearing existing cart items...');
+    for (const item of cart) {
+      await deleteCartItem(item._id);
+      console.log('Removed cart item:', item._id);
     }
-    console.log('Matched product:', backendProduct);
-    // Use backend _id if available, else fallback to id
-    const idToAdd = backendProduct._id || backendProduct.id;
-    addToCart(idToAdd, 1);
+
+    // Step 2: Add the new product to the cart
+    await addToCart(idToAdd, 1);
     console.log('Added to cart (id):', idToAdd);
+
+    // Step 3: Refresh cart data
+    await fetchCart();
+    console.log('Cart refreshed after adding new product.');
+
+    // Step 4: Show the cart popover
     setIsCartOpen(true);
     setTimeout(() => setIsCartOpen(false), 2500);
-  }, [addToCart, products]);
+  } catch (err) {
+    console.error('Error updating cart:', err);
+    setError('Failed to update cart. Please try again.');
+  }
+}, [addToCart, deleteCartItem, fetchCart, products, cart, setError]);
 
   // --- INTEGRATION: Remove from Cart ---
   const handleRemoveFromCart = useCallback((cartItemId) => {
@@ -258,7 +282,8 @@ export function CustomersPage() {
     setIsChatOpen(false);
     setIsFilterOpen(false);
   };
-
+const user = JSON.parse(localStorage.getItem('user')) || {};
+console.log('User data:', user);
   // Handle logout
   const handleLogout = () => {
       localStorage.removeItem('authToken');
@@ -961,11 +986,11 @@ function ProductDetailModal({ product, onClose, onAddToCart }) {
 function ChatInterface({ onClose }) {
   return (
     // Theme-aware chat container
-    <div className="fixed bottom-24 right-6 z-50 w-80 h-96 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-lg shadow-xl border border-gray-200 dark:border-gray-700/50 flex flex-col animate-fade-in-up">
+    <div className="fixed bottom-24 right-6 z-50 w-80 h-96 bg-gray-800 dark:bg-gray-800/90 backdrop-blur-md rounded-lg shadow-xl border border-gray-200 dark:border-gray-700/50 flex flex-col animate-fade-in-up">
       {/* Header - Theme-aware */}
-      <div className="flex justify-between items-center p-3 bg-emerald-600/90 dark:bg-emerald-700/80 text-white rounded-t-lg border-b border-emerald-500/50 dark:border-emerald-600/50">
+      <div className="flex justify-between items-center p-3 bg-emerald-600/90 dark:bg-emerald-700/80 text-black rounded-t-lg border-b border-emerald-500/50 dark:border-emerald-600/50">
         <h3 className="font-semibold text-md">Chat Support</h3>
-        <button onClick={onClose} className="p-1 rounded-full hover:bg-emerald-500 dark:hover:bg-emerald-600 focus:outline-none focus:ring-1 focus:ring-white">
+        <button onClick={onClose} className="p-1 rounded-full hover:bg-emerald-500 dark:hover:bg-emerald-600 focus:outline-none focus:ring-1 focus:ring-black">
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -977,18 +1002,18 @@ function ChatInterface({ onClose }) {
         </div>
          {/* Sent Message - Theme-aware */}
          <div className="flex justify-end">
-             <p className="bg-emerald-500 dark:bg-emerald-600 text-white p-2 rounded-lg max-w-[80%]">I have a question about product #5.</p>
+             <p className="bg-blue-600  text-black p-2 rounded-lg max-w-[80%]">I have a question about product #5.</p>
          </div>
          <div className="flex-grow flex items-end">
-            <p className="text-center text-gray-400 dark:text-gray-500 text-xs w-full">Chat interface placeholder</p>
+            <p className="text-center text-black dark:text-black text-xs w-full">Chat interface placeholder</p>
          </div>
       </div>
       {/* Input Area - Theme-aware */}
-      <div className="p-2 border-t border-gray-200 dark:border-gray-700/50">
+      <div className="p-2 border-t border-gray-700 dark:border-gray-700/50">
         <input
             type="text"
             placeholder="Type your message..."
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-black dark:text-black placeholder-gray-500 dark:placeholder-black rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
         />
       </div>
       {/* Chat Animation */}

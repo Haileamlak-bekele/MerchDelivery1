@@ -12,13 +12,10 @@ const merchantRoutes = require("./routes/merchant.routes.js");
 const dspRoutes = require("./routes/dsp.routes.js");
 const customersRoutes = require("./routes/customer.routes.js");
 const orderRoutes = require("./routes/order.routes.js");
-<<<<<<< HEAD
 const messagesRoutes = require("./routes/message.routes");
-=======
 const FeedbackRoutes = require("./routes/FeedBackRoute.js")
 const paymentAccountRoutes = require("./routes/paymentAccount.routes.js");
 const complaintRoutes = require('./routes/complaints');
->>>>>>> bac9c6b4dab1a0c8bf7912530b9d112db111e959
 
 dotenv.config();
 dbConnect();

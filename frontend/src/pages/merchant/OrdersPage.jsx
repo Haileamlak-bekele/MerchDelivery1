@@ -3,6 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMerchantOrders } from '../../hooks/useMerchantOrders';
 import Sidebar from '../../components/Sidebar';
+import { io } from "socket.io-client";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import {
   ShoppingCart,
   Clock,
@@ -19,6 +22,8 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { API_BASE_URL } from '../../config';
+
+const SOCKET_URL = "http://192.168.217.121:5000";
 
 function getImageUrl(imagePath, baseUrl = API_BASE_URL) {
   if (!imagePath) {
@@ -66,6 +71,27 @@ export default function OrdersPage() {
     const merchantId = order.items[0]?.product.merchantId || 'merchant123'; // Replace with actual merchantId source
     navigate(`/chat/${merchantId}/${dspId}`);
   };
+
+    useEffect(() => {
+    const socket = io(SOCKET_URL);
+    // Replace with your merchant ID (from session/localStorage/etc)
+    const merchantId = localStorage.getItem('merchantId');
+    socket.emit("join", merchantId);
+
+    socket.on("receiveMessage", (msg) => {
+      // Only show toast if the message is for this merchant
+      if (msg.to === merchantId) {
+        toast.info("New chat message: " + msg.content, {
+          position: "bottom-right",
+          autoClose: 3000,
+        });
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   const handleConfirmOrder = async (orderId) => {
     try {
@@ -133,6 +159,7 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-gray-900 via-gray-800 to-indigo-900 text-gray-200 font-sans">
+      <ToastContainer />
       {/* Sidebar */}
       <Sidebar
         isSidebarOpen={isSidebarOpen}

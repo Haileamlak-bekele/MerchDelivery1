@@ -248,13 +248,13 @@ function OrderMapView({ customerLocation, merchantLocation, dspLocation }) {
         {directions && <DirectionsRenderer directions={directions} />}
         {dspLocation && (
           <Marker
-            position={{ lat: dspLocation.lat, lng: dspLocation.lng }}
-            label="DSP"
-            icon={{
-              url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-              scaledSize: { width: 40, height: 40 }
-            }}
-          />
+  position={{ lat: dspLocation.lat, lng: dspLocation.lng }}
+  label="DSP"
+  icon={{
+    url: "https://maps.google.com/mapfiles/kml/shapes/cabs.png", // Car icon
+    scaledSize: { width: 30, height: 30 }
+  }}
+/>
         )}
       </GoogleMap>
     </LoadScript>
