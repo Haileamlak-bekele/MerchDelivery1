@@ -2,6 +2,7 @@ const Complaint = require('../src/config/model/complaint');
 const User = require('../src/config/model/Users.model');
 const Merchant = require("../src/config/model/Merchant.model.js");
 const DSP = require("../src/config/model/DSP.model.js");
+const Order = require("../src/config/model/Order.model.js")
 
 
 // Create a Complaint
@@ -37,12 +38,13 @@ exports.getComplaint = async (req, res) => {
     }
 
     // Fetch customer, merchant, and DSP details in parallel
-    const [customer, merchant, dsp] = await Promise.all([
+    const [customer, merchant,order] = await Promise.all([
       User.findById(complaint.CustomerId),
       Merchant.findById(complaint.merchantId),
-      DSP.findById(complaint.dspId)
+      Order.findById(complaint.OrderId)
     ]);
 
+    const dsp =  DSP.findById(order.dspAssigned)
     // Fetch additional merchant and DSP details if necessary
     let merchantUser = null;
     if (merchant) {
