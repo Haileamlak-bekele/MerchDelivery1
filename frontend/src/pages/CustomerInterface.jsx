@@ -199,7 +199,7 @@ export function CustomersPage() {
   };
 
   // --- INTEGRATION: Add to Cart ---
-// --- INTEGRATION: Add to Cart ---
+  // --- INTEGRATION: Add to Cart ---
 const handleAddToCart = useCallback(async (productToAdd) => {
   console.log('Adding to cart (single product):', productToAdd);
   // Log the full products array for debugging
@@ -283,7 +283,8 @@ const handleAddToCart = useCallback(async (productToAdd) => {
     setIsChatOpen(false);
     setIsFilterOpen(false);
   };
-
+const user = JSON.parse(localStorage.getItem('user')) || {};
+console.log('User data:', user);
   // Handle logout
   const handleLogout = () => {
       localStorage.removeItem('authToken');
@@ -986,11 +987,11 @@ function ProductDetailModal({ product, onClose, onAddToCart }) {
 function ChatInterface({ onClose }) {
   return (
     // Theme-aware chat container
-    <div className="fixed bottom-24 right-6 z-50 w-80 h-96 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-lg shadow-xl border border-gray-200 dark:border-gray-700/50 flex flex-col animate-fade-in-up">
+    <div className="fixed bottom-24 right-6 z-50 w-80 h-96 bg-gray-800 dark:bg-gray-800/90 backdrop-blur-md rounded-lg shadow-xl border border-gray-200 dark:border-gray-700/50 flex flex-col animate-fade-in-up">
       {/* Header - Theme-aware */}
-      <div className="flex justify-between items-center p-3 bg-emerald-600/90 dark:bg-emerald-700/80 text-white rounded-t-lg border-b border-emerald-500/50 dark:border-emerald-600/50">
+      <div className="flex justify-between items-center p-3 bg-emerald-600/90 dark:bg-emerald-700/80 text-black rounded-t-lg border-b border-emerald-500/50 dark:border-emerald-600/50">
         <h3 className="font-semibold text-md">Chat Support</h3>
-        <button onClick={onClose} className="p-1 rounded-full hover:bg-emerald-500 dark:hover:bg-emerald-600 focus:outline-none focus:ring-1 focus:ring-white">
+        <button onClick={onClose} className="p-1 rounded-full hover:bg-emerald-500 dark:hover:bg-emerald-600 focus:outline-none focus:ring-1 focus:ring-black">
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -1002,18 +1003,18 @@ function ChatInterface({ onClose }) {
         </div>
          {/* Sent Message - Theme-aware */}
          <div className="flex justify-end">
-             <p className="bg-emerald-500 dark:bg-emerald-600 text-white p-2 rounded-lg max-w-[80%]">I have a question about product #5.</p>
+             <p className="bg-blue-600  text-black p-2 rounded-lg max-w-[80%]">I have a question about product #5.</p>
          </div>
          <div className="flex-grow flex items-end">
-            <p className="text-center text-gray-400 dark:text-gray-500 text-xs w-full">Chat interface placeholder</p>
+            <p className="text-center text-black dark:text-black text-xs w-full">Chat interface placeholder</p>
          </div>
       </div>
       {/* Input Area - Theme-aware */}
-      <div className="p-2 border-t border-gray-200 dark:border-gray-700/50">
+      <div className="p-2 border-t border-gray-700 dark:border-gray-700/50">
         <input
             type="text"
             placeholder="Type your message..."
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-black dark:text-black placeholder-gray-500 dark:placeholder-black rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
         />
       </div>
       {/* Chat Animation */}

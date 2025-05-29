@@ -1,21 +1,19 @@
-// ProductDetailPage.js
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { FiShoppingCart, FiHeart, FiStar, FiChevronRight } from 'react-icons/fi';
+import { FiShoppingCart, FiHeart, FiStar } from 'react-icons/fi';
 import { useProductDetail } from '../hooks/useProductDetail';
 import { API_BASE_URL } from '../config';
 import { Link } from 'react-router-dom';
 import { useCustomerShop } from '../hooks/useCustomerShop';
 
-
-
 const ProductDetailPage = () => {
   const { productId } = useParams();
   const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
-  console.log('User from localStorage:', user);
-   const userID =user._id;
-   const Name = user.name;
-   const userName = user.name;
+  console.log("userid",user)
+  const userID = user._id;
+  console.log("userID",userID)
+  const Name = user.name;
+  const userName = user.name;
   const {
     product,
     comments,
@@ -37,74 +35,115 @@ const ProductDetailPage = () => {
     handleCommentSubmit,
     handleQuantityChange,
     calculateAverageRating
-  } = useProductDetail(productId,userID,Name);
+  } = useProductDetail(productId, userID, Name);
 
- const { products, addToCart,} = useCustomerShop();
+  const { products, addToCart } = useCustomerShop();
 
   const handleAddToCart = useCallback((productToAdd) => {
-   const backendProduct = products.find(p => p._id === productToAdd._id);
+    const backendProduct = products.find(p => p._id === productToAdd._id);
     if (!backendProduct) {
       console.error('No matching product found in products array for:', productToAdd);
       return;
     }
-    console.log('Matched product:', backendProduct);
-    // Use backend _id if available, else fallback to id
     const idToAdd = backendProduct._id || backendProduct.id;
     addToCart(idToAdd, 1);
-    console.log('Added to cart (id):', idToAdd);
-
     alert("product added to cart successfully");
-  }, [addToCart, products]); 
+  }, [addToCart, products]);
 
- const handleCartClick = (e) => {
+  const handleCartClick = (e) => {
     e.stopPropagation();
-    console.log('Add to Cart button clicked (id):', product._id || product.id);
     handleAddToCart(product);
   };
 
-function getImageUrl(imagePath, baseUrl = API_BASE_URL) {
-  console.log('Original image path:', imagePath);
-  console.log('Base URL:', baseUrl);
-  
-  if (!imagePath) {
-    console.log('No image path provided, using placeholder');
-    return 'https://placehold.co/300x192/f3f4f6/9ca3af?text=N/A';
+  function getImageUrl(imagePath, baseUrl = API_BASE_URL) {
+    if (!imagePath) {
+      return 'https://placehold.co/300x192/f3f4f6/9ca3af?text=N/A';
+    }
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    if (imagePath.startsWith('/uploads')) {
+      return `${baseUrl}${imagePath}`;
+    }
+    let normalizedPath = imagePath
+      .replace(/\\/g, '/')
+      .replace(/\/+/g, '/')
+      .replace(/^[/.]+/, '')
+      .replace(/^uploads/, '/uploads')
+      .replace(/^\/?/, '/');
+    return `${baseUrl}${normalizedPath}`;
   }
-  
-  // If it's already a full URL, return it
-  if (imagePath.startsWith('http')) {
-    console.log('Full URL detected:', imagePath);
-    return imagePath;
-  }
-  
-  // If it's a relative path starting with /uploads, just prepend the base URL
-  if (imagePath.startsWith('/uploads')) {
-    const finalUrl = `${baseUrl}${imagePath}`;
-    console.log('Relative path with /uploads:', finalUrl);
-    return finalUrl;
-  }
-  
-  // For other cases, normalize the path
-  let normalizedPath = imagePath
-    .replace(/\\/g, '/')
-    .replace(/\/+/g, '/')
-    .replace(/^[/.]+/, '')
-    .replace(/^uploads/, '/uploads')
-    .replace(/^\/?/, '/');
-    
-  const finalUrl = `${baseUrl}${normalizedPath}`;
-  console.log('Normalized path:', normalizedPath);
-  console.log('Final URL:', finalUrl);
-  return finalUrl;
-}
-  
+
+  // --- Chat State and Logic ---
+  const [showChat, setShowChat] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatLoading, setChatLoading] = useState(false);
+ const [merchantDetail, setMerchantDetail] = useState(null);
+
+  const CHAT_API_URL = `${API_BASE_URL}/messages/send`;
+  const merchantId = product?.merchant?._id || product?.merchantId;
+console.log("product detail",merchantId)
+
+ useEffect(() => {
+    if (!merchantId) return;
+    fetch(`http://localhost:5000/merchant/merchants/${merchantId}`)
+      .then(res => res.json())
+      .then(data => setMerchantDetail(data))
+      .catch(err => setMerchantDetail(null));
+  }, [merchantId]);
+
+  console.log( "merchantDetail", merchantDetail)
+  const merchuserid = merchantDetail?.userId || merchantDetail?._id;
+  console.log("merchuserid",merchuserid)
+
+  const fetchChatMessages = async () => {
+    if (!merchantId) return;
+    setChatLoading(true);
+    try {
+      const res = await fetch(
+        `http://localhost:5000/messages/history?user1=${userID}&user2=${merchuserid}&productId=${productId}`
+      );
+      const data = await res.json();
+      console.log(data);
+      setChatMessages(data);
+    } catch (err) {
+      setChatMessages([]);
+    }
+    setChatLoading(false);
+  };
+
+  const handleOpenChat = async () => {
+    setShowChat(true);
+    await fetchChatMessages();
+  };
+
+  const handleSendMessage = async () => {
+    if (!chatInput.trim()) return;
+    try {
+      const res = await fetch(CHAT_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: userID,
+          to: merchuserid,
+          content: chatInput,
+          productId,
+        }),
+      });
+      const data = await res.json();
+      setChatMessages((prev) => [...prev, data.data]);
+      setChatInput('');
+    } catch (err) {
+      // handle error
+    }
+  };
+
   if (loading) return (
     <div className="flex justify-center items-center min-h-screen">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
     </div>
   );
-
-
 
   if (!product) return (
     <div className="text-center py-20">
@@ -118,19 +157,15 @@ function getImageUrl(imagePath, baseUrl = API_BASE_URL) {
     </div>
   );
 
-
-
   return (
-
     <div className="bg-gray-50 min-h-screen py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumbs */}
-    <div className="flex items-center text-sm text-gray-500 mb-6">
-      <Link to="/customer" className="hover:text-emerald-600 cursor-pointer">
-       Back to Home
-      </Link>
-    
-      </div>
+        <div className="flex items-center text-sm text-gray-500 mb-6">
+          <Link to="/customer" className="hover:text-emerald-600 cursor-pointer">
+            Back to Home
+          </Link>
+        </div>
 
         {/* Product Main Section */}
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -237,13 +272,19 @@ function getImageUrl(imagePath, baseUrl = API_BASE_URL) {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-3">
-                <button 
-                onClick={handleCartClick}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-6 rounded-lg shadow-sm flex items-center justify-center transition">
+                <button
+                  onClick={handleCartClick}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-6 rounded-lg shadow-sm flex items-center justify-center transition">
                   <FiShoppingCart className="mr-2" />
                   Add to Cart
                 </button>
-
+                {/* Chat with Merchant Button */}
+                <button
+                  onClick={handleOpenChat}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg shadow-sm flex items-center justify-center transition"
+                >
+                  💬 Chat with Merchant
+                </button>
               </div>
 
               {/* Product Details */}
@@ -270,10 +311,60 @@ function getImageUrl(imagePath, baseUrl = API_BASE_URL) {
           </div>
         </div>
 
+        {/* Chat Box */}
+        {showChat && (
+  <div className="fixed top-0 right-0 h-full w-full sm:w-96 bg-gradient-to-b from-indigo-50 to-emerald-50 shadow-lg border-l border-gray-200 z-50 flex flex-col">
+    <div className="flex items-center justify-between p-4 border-b bg-indigo-600">
+      <span className="font-bold text-lg text-white">Chat with Merchant</span>
+      <button onClick={() => setShowChat(false)} className="text-white hover:text-gray-200 text-2xl">&times;</button>
+    </div>
+    <div className="flex-1 overflow-y-auto p-4 space-y-2">
+      {chatLoading && <div className="text-center text-gray-400">Loading...</div>}
+      {!chatLoading && chatMessages.length === 0 && (
+        <div className="text-gray-400 text-center mt-10">No messages yet.</div>
+      )}
+      {chatMessages.map((msg) => (
+        <div
+          key={msg._id}
+          className={`flex ${msg.from === userID ? 'justify-end' : 'justify-start'}`}
+        >
+          <div
+            className={`rounded-lg px-4 py-2 max-w-xs break-words shadow ${
+              msg.from === userID
+                ? 'bg-indigo-600 text-white ml-auto'
+                : 'bg-white text-gray-900 border mr-auto'
+            }`}
+          >
+            <div className="text-sm">{msg.content}</div>
+            <div className={`text-xs mt-1 text-right ${msg.from === userID ? 'text-indigo-200' : 'text-gray-400'}`}>
+              {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : ''}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+    <div className="p-4 border-t flex gap-2 bg-indigo-50">
+      <input
+        type="text"
+        value={chatInput}
+        onChange={(e) => setChatInput(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') handleSendMessage(); }}
+        className="flex-1 border rounded px-3 py-2 focus:outline-none text-black bg-white"
+        placeholder="Type your message..."
+      />
+      <button
+        onClick={handleSendMessage}
+        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
+      >
+        Send
+      </button>
+    </div>
+  </div>
+)}
+
         {/* Reviews Section */}
         <div className="mt-8 bg-white rounded-xl shadow-md overflow-hidden p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Customer Reviews</h2>
-
           {/* Review Summary */}
           <div className="flex items-center mb-8">
             <div className="text-5xl font-bold mr-6">{calculateAverageRating()}</div>
@@ -291,8 +382,7 @@ function getImageUrl(imagePath, baseUrl = API_BASE_URL) {
               {/* Repeat for 4, 3, 2, 1 stars */}
             </div>
           </div>
-
-          {/* Reviews List */ console.log(comments)}
+          {/* Reviews List */}
           <div className="space-y-6">
             {comments.length === 0 ? (
               <p className="text-gray-500">No reviews yet. Be the first to review!</p>
@@ -316,7 +406,6 @@ function getImageUrl(imagePath, baseUrl = API_BASE_URL) {
               ))
             )}
           </div>
-
           {/* Add Review Form */}
           <div className="mt-10">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Write a Review</h3>

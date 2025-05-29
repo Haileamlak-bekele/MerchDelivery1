@@ -1,6 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMerchantOrders } from '../../hooks/useMerchantOrders';
 import Sidebar from '../../components/Sidebar';
+import { io } from "socket.io-client";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import {
   ShoppingCart,
   Clock,
@@ -13,9 +18,12 @@ import {
   X,
   AlertCircle,
   Menu,
-  UserCircle
+  UserCircle,
+  MessageSquare
 } from 'lucide-react';
 import { API_BASE_URL } from '../../config';
+
+const SOCKET_URL = "http://192.168.217.121:5000";
 
 function getImageUrl(imagePath, baseUrl = API_BASE_URL) {
   if (!imagePath) {
@@ -38,12 +46,12 @@ function getImageUrl(imagePath, baseUrl = API_BASE_URL) {
 
 export default function OrdersPage() {
   const { orders, loading, error, confirmOrder } = useMerchantOrders();
+  const order1 = orders || []; // Ensure orders is always an array
+  console.log(order1);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [paymentAccount, setPaymentAccount] = useState(null);
-  const [accountLoading, setAccountLoading] = useState(true);
-  const [accountError, setAccountError] = useState(null);
+  const navigate = useNavigate();
 
   // Fetch active DSPs
   const [activeDsps, setActiveDsps] = useState([]);
@@ -51,13 +59,40 @@ export default function OrdersPage() {
     fetch('http://localhost:5000/users/dsps/getActiveDsps')
       .then(res => res.json())
       .then(setActiveDsps)
-      .catch(console.error)
+      .catch(console.error);
   }, []);
 
   const handleViewOrder = (order) => {
     setSelectedOrder(order);
     setIsOrderModalOpen(true);
   };
+
+  const handleChatWithDsp = (order) => {
+    const dspId = typeof order.dspAssigned === 'object' ? order.dspAssigned._id : order.dspAssigned;
+    const merchantId = order.items[0]?.product.merchantId || 'merchant123'; // Replace with actual merchantId source
+    navigate(`/chat/${merchantId}/${dspId}`);
+  };
+
+    useEffect(() => {
+    const socket = io(SOCKET_URL);
+    // Replace with your merchant ID (from session/localStorage/etc)
+    const merchantId = localStorage.getItem('merchantId');
+    socket.emit("join", merchantId);
+
+    socket.on("receiveMessage", (msg) => {
+      // Only show toast if the message is for this merchant
+      if (msg.to === merchantId) {
+        toast.info("New chat message: " + msg.content, {
+          position: "bottom-right",
+          autoClose: 3000,
+        });
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   const handleConfirmOrder = async (orderId) => {
     try {
@@ -191,6 +226,15 @@ export default function OrdersPage() {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
+                          {order.dspAssigned && (
+                            <button
+                              onClick={() => handleChatWithDsp(order)}
+                              className="text-emerald-400 hover:text-emerald-300 p-1.5 rounded-md hover:bg-emerald-500/20 transition duration-150 ease-in-out"
+                              title={`Chat with ${typeof order.dspAssigned === 'object' ? order.dspAssigned.name : 'DSP'}`}
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -199,7 +243,7 @@ export default function OrdersPage() {
               </table>
             </div>
           </div>
-          {/* Modal */}
+          {/* Order Details Modal */}
           {isOrderModalOpen && selectedOrder && (
             <OrderDetailsModal
               isOpen={isOrderModalOpen}

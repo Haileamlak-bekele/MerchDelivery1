@@ -1,21 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomNavbar from '../components/buttomNav';
 import LocationTracker from '../components/locationTracker';
+import { io } from 'socket.io-client';
+import Toast from 'react-native-toast-message';
+
+
+const SOCKET_URL = 'http://192.168.188.100:5000';
 
 const DSPDashboard = () => {
+
+   const socketRef = useRef(null);
   const navigation = useNavigation();
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [dspId, setDspId] = useState(null);
+
+ useEffect(() => {
+    AsyncStorage.getItem('userId').then(id => {
+      setDspId(id);
+    });
+  }, []);
+ 
+
+   // Connect socket and listen for messages after dspId is loaded
+  useEffect(() => {
+    if (!dspId) return;
+    socketRef.current = io(SOCKET_URL, { transports: ['websocket'] });
+    socketRef.current.emit('join', dspId);
+    // Alert.alert('Connected to chat server',dspId);
+
+  socketRef.current.on('receiveMessage', (msg) => {
+  console.log('Received message:', msg, 'dspId:', dspId);
+  Toast.show({
+        type: 'info',
+        text1: 'New message',
+        text2: msg.content,
+        position: 'bottom',
+        visibilityTime: 2000,
+      });
+});
+
+    return () => {
+      socketRef.current.disconnect();
+    };
+  }, [dspId]);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         const token = await AsyncStorage.getItem('token');
-        const res = await fetch('http://192.168.137.1:5000/dsp/orders', {
+        const res = await fetch('http://192.168.188.100:5000/dsp/orders', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -52,7 +90,7 @@ const DSPDashboard = () => {
   const handleAccept = async (orderId) => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await fetch(`http://192.168.137.1:5000/orders/${orderId}/dsp-accept`, {
+      const res = await fetch(`http://192.168.188.100:5000/orders/${orderId}/dsp-accept`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -79,7 +117,7 @@ const DSPDashboard = () => {
   const handleReject = async (orderId) => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await fetch(`http://192.168.137.1:5000/orders/${orderId}/dsp-reject`, {
+      const res = await fetch(`http://192.168.188.100:5000/orders/${orderId}/dsp-reject`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -101,7 +139,7 @@ const DSPDashboard = () => {
   const handleCompleteDelivery = async (orderId) => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await fetch(`http://192.168.137.1:5000/orders/${orderId}/delivered`, {
+      const res = await fetch(`http://192.168.188.100:5000/orders/${orderId}/delivered`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -174,6 +212,9 @@ const DSPDashboard = () => {
           <Text style={styles.profileText}>👤</Text>
         </View>
       </View>
+ {/* <TouchableOpacity onPress={() => Toast.show({ type: 'success', text1: 'Test Toast', position: 'bottom' })}>
+        <Text>Show Test Toast</Text>
+      </TouchableOpacity> */}
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* Active Deliveries */}
@@ -219,7 +260,7 @@ const DSPDashboard = () => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.chatButton}
-                  onPress={() => console.log('Chat with Customer')}
+                  onPress={() => navigation.navigate('Chat',{ merchantId: order.items[0].product?.merchantId, dspId: order.dspAssigned })}
                 >
                   <Text style={styles.buttonText}>💬 Chat</Text>
                 </TouchableOpacity>
@@ -228,7 +269,7 @@ const DSPDashboard = () => {
   onPress={async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await fetch(`http://192.168.137.1:5000/orders/${order._id}/dsp-on-shipping`, {
+      const res = await fetch(`http://192.168.188.100:5000/orders/${order._id}/dsp-on-shipping`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -418,6 +459,7 @@ const DSPDashboard = () => {
 
       {/* <LocationTracker /> */}
       <BottomNavbar />
+      <Toast />
     </View>
   );
 };

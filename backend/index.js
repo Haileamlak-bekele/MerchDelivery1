@@ -12,6 +12,7 @@ const merchantRoutes = require("./routes/merchant.routes.js");
 const dspRoutes = require("./routes/dsp.routes.js");
 const customersRoutes = require("./routes/customer.routes.js");
 const orderRoutes = require("./routes/order.routes.js");
+const messagesRoutes = require("./routes/message.routes");
 const FeedbackRoutes = require("./routes/FeedBackRoute.js")
 const paymentAccountRoutes = require("./routes/paymentAccount.routes.js");
 const complaintRoutes = require('./routes/complaints');
@@ -57,6 +58,7 @@ app.use("/merchant", merchantRoutes);
 app.use("/dsp", dspRoutes);
 app.use("/customers", customersRoutes);
 app.use("/orders", orderRoutes);
+app.use("/messages", messagesRoutes);
 app.use("/feedback",FeedbackRoutes)
 app.use("/payment-accounts", paymentAccountRoutes);
 app.use('/complaints', complaintRoutes);
@@ -65,6 +67,20 @@ app.use('/complaints', complaintRoutes);
 app.set('io', io); // Make io available in the app
 io.on('connection', (socket) => {
   console.log('WebSocket client connected:', socket.id);
+
+  // --- Real-time Messaging Logic ---
+  // User joins with their userId
+  socket.on('join', (userId) => {
+    socket.join(userId); // Each user joins a room named by their userId
+    console.log(`User ${userId} joined their room`);
+  });
+
+  // Send message event
+  socket.on('sendMessage', ({ from, to, content }) => {
+    // Optionally: Save message to DB here
+    // Emit to recipient's room
+    io.to(to).emit('receiveMessage', { from, content, timestamp: new Date() });
+  });
 
   // Example: Customer subscribes to order location updates
   socket.on('trackOrder', (orderId) => {

@@ -9,6 +9,7 @@ function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
     { id: 'inventory', label: 'Inventory', icon: Package, to: '/merchant' },
     { id: 'orders', label: 'Orders', icon: ShoppingCart, to: '/orders' },
     { id: 'profile', label: 'Profile', icon: UserCircle, to: '/profile' },
+    {id:'chat', label: 'Chat', icon: UserCircle, to: '/chat' } // Assuming you have a chat page
   ];
 
   const handleLogout = () => {
