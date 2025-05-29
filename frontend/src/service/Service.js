@@ -66,3 +66,16 @@ export const fetchTransactionsByAccountId = async (accountId) => {
     throw error;
   }
 };
+
+// reportService.js
+ // Replace with your actual API URL
+
+export const createReport = async (reportData) => {
+  try {
+    const response = await axios.post(API_URL, reportData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating report:', error);
+    throw error;
+  }
+};

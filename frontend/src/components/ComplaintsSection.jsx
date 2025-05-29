@@ -1,13 +1,23 @@
 import React, { useState } from 'react';
 import { Search, Eye, X } from 'lucide-react';
 import useComplaints from '../hooks/useComplain';
+import ComplaintModal from './ComplaintModal';
+import MerchantDetailModal from './MerchantDetailModal';
+import DSPDetailModal from './DSPDetailModal';
 
 function ComplaintsSection() {
   const { complaints, loading, error, updateComplaintStatus, deleteComplaint } = useComplaints();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [selectedComplaint, setSelectedComplaint] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedComplaintId, setSelectedComplaintId] = useState(null);
+  const [isComplaintModalOpen, setIsComplaintModalOpen] = useState(false);
+  const [selectedMerchant, setSelectedMerchant] = useState(null);
+  const [isMerchantDetailModalOpen, setIsMerchantDetailModalOpen] = useState(false);
+  const [selectedDsp, setSelectedDsp] = useState(null);
+  const [isDspDetailModalOpen, setIsDspDetailModalOpen] = useState(false);
+
+  const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
+  const userID = user ? user._id : null;
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
@@ -17,22 +27,39 @@ function ComplaintsSection() {
     setStatusFilter(event.target.value);
   };
 
-  const openModal = (complaint) => {
-    setSelectedComplaint(complaint);
-    setIsModalOpen(true);
+  const openComplaintModal = (complaint) => {
+    setSelectedComplaintId(complaint._id);
+    setIsComplaintModalOpen(true);
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedComplaint(null);
+  const closeComplaintModal = () => {
+    setIsComplaintModalOpen(false);
+    setSelectedComplaintId(null);
+  };
+
+  const openMerchantDetailModal = (merchant) => {
+    setSelectedMerchant(merchant);
+    setIsMerchantDetailModalOpen(true);
+  };
+
+  const closeMerchantDetailModal = () => {
+    setIsMerchantDetailModalOpen(false);
+    setSelectedMerchant(null);
+  };
+
+  const openDspDetailModal = (dsp) => {
+    setSelectedDsp(dsp);
+    setIsDspDetailModalOpen(true);
+  };
+
+  const closeDspDetailModal = () => {
+    setIsDspDetailModalOpen(false);
+    setSelectedDsp(null);
   };
 
   const filteredComplaints = complaints.filter((complaint) => {
-    const matchesSearchTerm = complaint.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              complaint.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              complaint.complaint.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'All' || complaint.status === statusFilter;
-    return matchesSearchTerm && matchesStatus;
+    return matchesStatus;
   });
 
   if (loading) return <div>Loading...</div>;
@@ -84,15 +111,6 @@ function ComplaintsSection() {
                   Order ID
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Customer
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Merchant
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  DSP
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Complaint
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -110,11 +128,8 @@ function ComplaintsSection() {
               {filteredComplaints.map((complaint) => (
                 <tr key={complaint._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{complaint._id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{complaint.orderId}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{complaint.customer}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{complaint.merchant}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{complaint.dsp}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{complaint.complaint}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{complaint.OrderId}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{complaint.description}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                       complaint.status === 'Resolved' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400' :
@@ -124,10 +139,10 @@ function ComplaintsSection() {
                       {complaint.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(complaint.date).toLocaleDateString()}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(complaint.createdAt).toLocaleDateString()}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
-                      onClick={() => openModal(complaint)}
+                      onClick={() => openComplaintModal(complaint)}
                       className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300"
                     >
                       <Eye className="h-5 w-5" />
@@ -136,7 +151,7 @@ function ComplaintsSection() {
                       onClick={() => deleteComplaint(complaint._id)}
                       className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 ml-2"
                     >
-                      Delete
+                      <X className="h-5 w-5" />
                     </button>
                   </td>
                 </tr>
@@ -146,63 +161,25 @@ function ComplaintsSection() {
         </div>
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-2xl p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Complaint Details</h3>
-              <button
-                onClick={closeModal}
-                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Complaint ID</p>
-                <p className="text-sm text-gray-900 dark:text-white">{selectedComplaint._id}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Order ID</p>
-                <p className="text-sm text-gray-900 dark:text-white">{selectedComplaint.orderId}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Customer</p>
-                <p className="text-sm text-gray-900 dark:text-white">{selectedComplaint.customer}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Merchant</p>
-                <p className="text-sm text-gray-900 dark:text-white">{selectedComplaint.merchant}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">DSP</p>
-                <p className="text-sm text-gray-900 dark:text-white">{selectedComplaint.dsp}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Complaint</p>
-                <p className="text-sm text-gray-900 dark:text-white">{selectedComplaint.complaint}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</p>
-                <p className="text-sm text-gray-900 dark:text-white">{selectedComplaint.status}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Date</p>
-                <p className="text-sm text-gray-900 dark:text-white">{new Date(selectedComplaint.date).toLocaleDateString()}</p>
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={closeModal}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ComplaintModal
+        isOpen={isComplaintModalOpen}
+        onClose={closeComplaintModal}
+        complaintId={selectedComplaintId}
+        openMerchantDetailModal={openMerchantDetailModal}
+        openDspDetailModal={openDspDetailModal}
+      />
+
+      <MerchantDetailModal
+        isOpen={isMerchantDetailModalOpen}
+        onClose={closeMerchantDetailModal}
+        merchant={selectedMerchant}
+      />
+
+      <DSPDetailModal
+        isOpen={isDspDetailModalOpen}
+        onClose={closeDspDetailModal}
+        dsp={selectedDsp}
+      />
     </div>
   );
 }

@@ -941,6 +941,10 @@ function MerchantSection() {
   );
 }
 
+ // Ensure you have the Search icon imported
+// Adjust the import path as necessary
+
+
 function DspSection() {
   const { getFilteredDsps, setFilter, refresh } = useUsers();
   const [selectedDsp, setSelectedDsp] = useState(null);
@@ -1059,14 +1063,7 @@ function DspSection() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300">
-                        {user.DspDetails?.vehicleDetails.charAt(0)}
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">{user.DspDetails?.vehicleDetails}</div>
-                      </div>
-                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{user.DspDetails?.vehicleDetails}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -1079,8 +1076,16 @@ function DspSection() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button onClick={() => openModal(user)}>View Details</button>
-                    <button onClick={() => handleDelete(user._id)} className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
+                    <button
+                      onClick={() => openModal(user)}
+                      className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-2"
+                    >
+                      View Details
+                    </button>
+                    <button
+                      onClick={() => handleDelete(user._id)}
+                      className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                    >
                       Delete
                     </button>
                   </td>
@@ -1089,7 +1094,7 @@ function DspSection() {
             </tbody>
           </table>
           <DSPDetailModal
-            merchant={selectedDsp}
+            dsp={selectedDsp}
             isOpen={isModalOpen}
             onClose={closeModal}
           />
@@ -1111,7 +1116,9 @@ function DspSection() {
               <button
                 key={index + 1}
                 onClick={() => paginate(index + 1)}
-                className={`px-3 py-1 border rounded-md ${currentPage === index + 1 ? 'border-emerald-500 bg-emerald-500 text-white hover:bg-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                className={`px-3 py-1 border rounded-md ${
+                  currentPage === index + 1 ? 'border-emerald-500 bg-emerald-500 text-white hover:bg-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
               >
                 {index + 1}
               </button>
@@ -1129,3 +1136,5 @@ function DspSection() {
     </div>
   );
 }
+
+

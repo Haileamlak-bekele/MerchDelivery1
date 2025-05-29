@@ -6,6 +6,7 @@ import { API_BASE_URL } from '../config';
 import CustomerTrackingOrders from '../components/CustomerTrackingPage';
 import ProductShowcase from '../components/Product/ProductShowcase';
 
+
 // --- Constants ---
 const TAX_RATE = 0.15; // 15% Tax Rate
 const PAGES = { // Define page constants for navigation

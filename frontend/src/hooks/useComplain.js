@@ -21,6 +21,21 @@ const useComplaints = () => {
     fetchComplaints();
   }, []);
 
+  const fetchComplaintById = async (id) => {
+    try {
+      console.log("this part")
+      const data = await complaintService.getComplaint(id);
+      return data; // Return the fetched complaint data
+    } catch (err) {
+      setError(err.message);
+      return null; // Return null or handle error as needed
+    }
+  };
+
+  useEffect(() => {
+    fetchComplaints();
+  }, []);
+
   const addComplaint = async (complaintData) => {
     try {
       const newComplaint = await complaintService.createComplaint(complaintData);
@@ -48,7 +63,7 @@ const useComplaints = () => {
     }
   };
 
-  return { complaints, loading, error, addComplaint, updateComplaintStatus, deleteComplaint, fetchComplaints };
+  return { complaints, loading, error,fetchComplaintById , addComplaint, updateComplaintStatus, deleteComplaint, fetchComplaints };
 };
 
 export default useComplaints;

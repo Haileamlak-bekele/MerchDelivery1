@@ -154,9 +154,21 @@ const MerchantDetailModal = ({ merchant, isOpen, onClose, onStatusUpdate }) => {
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Merchant Information</h3>
                   <div className="space-y-3">
                     <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Merchant</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{merchant.name}</p>
+                    </div>                    
+                    <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Business Name</p>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{merchant.merchantDetails?.storeName}</p>
                     </div>
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Phone Number</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{merchant.phoneNumber}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{merchant.email}</p>
+                    </div>                                        
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Registration Date</p>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
@@ -173,8 +185,8 @@ const MerchantDetailModal = ({ merchant, isOpen, onClose, onStatusUpdate }) => {
   </p>
 )}
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
+                    <div className='mb-6'>
+                      <p className="text-sm text-gray-500  dark:text-gray-400">Status</p>
                       <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
                         {merchant.merchantDetails?.approvalStatus}
                       </p>
@@ -185,19 +197,7 @@ const MerchantDetailModal = ({ merchant, isOpen, onClose, onStatusUpdate }) => {
                 {/* Verification section */}
                 <div className="mb-6">                 
                   <div className="space-y-4">
-                    <div>
-                      <label htmlFor="verificationNote" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Verification Notes
-                      </label>
-                      <textarea
-                        id="verificationNote"
-                        rows={6}
-                        className="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700"
-                        placeholder="Add any notes about this document..."
-                        value={verificationNote}
-                        onChange={(e) => setVerificationNote(e.target.value)}
-                      />
-                    </div>
+
 
                     {updateError && (
                       <div className="text-red-500 text-sm">{updateError}</div>
