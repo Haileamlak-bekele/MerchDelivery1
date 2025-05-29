@@ -6,6 +6,7 @@ import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
 import LiveDeliveryTracking from './pages/LiveDeliveryTracking';
 import RegistrationSuccess from './pages/RegistrationSuccess';
+import PaymentPage from './pages/PaymentPage.jsx';
 import CartPage from './pages/CartPage';
 import { CustomersPage } from './pages/CustomerInterface';
 import CheckoutPage from './components/checkout.jsx';
@@ -71,6 +72,7 @@ export default function AppRouter() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/customer" element={<CustomersPage />} />
+          <Route path='/payment' element={<PaymentPage />} />
           <Route
             path="/merchant"
             element={

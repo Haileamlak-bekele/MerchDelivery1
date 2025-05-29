@@ -20,23 +20,23 @@ import {
   Filter,
   Calendar,
   Clock,
-  CreditCard,
+  CreditCard as CreditCardIcon,
   ShoppingCart,
   Box,
   Database,
   Server,
   Activity,
-  AlertCircle
+  AlertCircle,
+  Banknote,
+  DollarSign
 } from 'lucide-react';
 import MerchantDetailModal from '../components/MerchantDetailModal';
 import DSPDetailModal from '../components/DSPDetailModal';
 
 import { useUsers } from '../hooks/useUsers';
 import DeliveryPriceSection from '../components/DeliveryPriceSection';
-import ComplaintsSection from '../components/ComplaintsSection';
-import { fetchPlatformStats } from '../service/Service';
-import { deleteUsers } from '../service/User';
-import { useNavigate } from 'react-router-dom';
+import { fetchPlatformStats, fetchPlatformSettings, updatePlatformSettings } from '../service/Service';
+
 // Main App component
 export default function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -101,13 +101,6 @@ function AdminDashboard({ darkMode, setDarkMode }) {
     { id: 2, title: 'System update', message: 'Scheduled maintenance tonight', time: '1 hour ago', read: true },
     { id: 3, title: 'New user registered', message: 'John Doe joined the platform', time: '3 hours ago', read: true },
   ];
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    localStorage.removeItem('userRole');
-    navigate('/auth');
-  };
 
   // Function to render the content based on the active section
   const renderSection = () => {
@@ -126,8 +119,6 @@ function AdminDashboard({ darkMode, setDarkMode }) {
         return <DeliveriesSection />;
       case 'settings':
         return <SettingsSection />;
-      case 'complains':
-        return <ComplaintsSection />;
       default:
         return <OverviewSection deliveryData={deliveryData} userGrowthData={userGrowthData} pieData={pieData} />;
     }
@@ -137,12 +128,10 @@ function AdminDashboard({ darkMode, setDarkMode }) {
   const navItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'users', label: 'Users', icon: Users },
-    { id: 'merchants', label: 'Merchant', icon: Users },
-    { id: 'dsp', label: 'DSP', icon: Users },
-    { id: 'delivery-prices', label: 'Delivery Prices', icon: Users },
-    { id: 'deliveries', label: 'Deliveries', icon: Truck },
-    { id: 'complains', label: 'complains', icon: Truck },
-    { id: 'Settings', label: 'Settings', icon: Settings },,
+    { id: 'merchants', label: 'Merchant', icon: ShoppingCart  },
+    { id: 'dsp', label: 'DSP', icon: Truck  },
+    { id: 'delivery-prices', label: 'Delivery Prices', icon: DollarSign  },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   // Toggle dark mode
@@ -319,7 +308,7 @@ function AdminDashboard({ darkMode, setDarkMode }) {
                   </div>
                   <div className="py-1 border-t border-gray-200 dark:border-gray-700">
                     <button
-                      onClick={handleLogout}
+                      onClick={() => {}}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       Sign out
@@ -371,7 +360,7 @@ function AdminDashboard({ darkMode, setDarkMode }) {
 // --- Section Components ---
 
 // Overview Section Component
-// eslint-disable-next-line no-unused-vars
+
 function OverviewSection() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -395,20 +384,25 @@ function OverviewSection() {
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
-  const userGrowthData = [
-    { name: 'Jan', users: stats.registeredUsers.monthly.find(item => item.month === 'January')?.count || 0 },
-    { name: 'Feb', users: stats.registeredUsers.monthly.find(item => item.month === 'February')?.count || 0 },
-    { name: 'Mar', users: stats.registeredUsers.monthly.find(item => item.month === 'March')?.count || 0 },
-    { name: 'Apr', users: stats.registeredUsers.monthly.find(item => item.month === 'April')?.count || 0 },
-    { name: 'May', users: stats.registeredUsers.monthly.find(item => item.month === 'May')?.count || 0 },
-    { name: 'Jun', users: stats.registeredUsers.monthly.find(item => item.month === 'June')?.count || 0 },
-    { name: 'Jul', users: stats.registeredUsers.monthly.find(item => item.month === 'July')?.count || 0 },
-    { name: 'Aug', users: stats.registeredUsers.monthly.find(item => item.month === 'August')?.count || 0 },
-    { name: 'Sep', users: stats.registeredUsers.monthly.find(item => item.month === 'September')?.count || 0 },
-    { name: 'Oct', users: stats.registeredUsers.monthly.find(item => item.month === 'October')?.count || 0 },
-    { name: 'Nov', users: stats.registeredUsers.monthly.find(item => item.month === 'November')?.count || 0 },
-    { name: 'Dec', users: stats.registeredUsers.monthly.find(item => item.month === 'December')?.count || 0 },
+  // Sample data for charts (replace with actual data from backend)
+  const deliveryData = [
+    { name: 'Jan', value: 400 },
+    { name: 'Feb', value: 300 },
+    { name: 'Mar', value: 600 },
+    { name: 'Apr', value: 800 },
+    { name: 'May', value: 500 },
+    { name: 'Jun', value: 900 },
   ];
+
+ const userGrowthData = [
+  { name: 'Jan', users: stats.registeredUsers.monthly.find(item => item.month === 'January')?.count || 0 },
+  { name: 'Feb', users: stats.registeredUsers.monthly.find(item => item.month === 'February')?.count || 0 },
+  { name: 'Mar', users: stats.registeredUsers.monthly.find(item => item.month === 'March')?.count || 0 },
+  { name: 'Apr', users: stats.registeredUsers.monthly.find(item => item.month === 'April')?.count || 0 },
+  { name: 'May', users: stats.registeredUsers.monthly.find(item => item.month === 'May')?.count || 0 },
+  { name: 'Jun', users: stats.registeredUsers.monthly.find(item => item.month === 'June')?.count || 0 },
+  // Add more months as needed
+];
 
   const { total, completed, inProgress, pending } = stats.orders;
 
@@ -420,7 +414,8 @@ function OverviewSection() {
   const inProgressPercentageRounded = Math.round(inProgressPercentage * 100) / 100;
   const pendingPercentageRounded = Math.round(pendingPercentage * 100) / 100;
 
-  const pieData = [
+
+ const pieData = [
     { name: 'Completed', value: completedPercentageRounded },
     { name: 'In Progress', value: inProgressPercentageRounded },
     { name: 'Pending', value: pendingPercentageRounded },
@@ -428,13 +423,20 @@ function OverviewSection() {
 
   const COLORS = ['#00C49F', '#0088FE', '#FFBB28', '#FF8042', '#8884D8'];
 
-  // Define stats cards using fetched data
-  const statsCards = [
-    { name: 'Total Users', value: stats?.totalUsers || '0', icon: Users, change: '+12%', trend: 'up' },
-    { name: 'Total Merchant', value: stats?.roles?.merchant || '0', icon: Users, change: '+5%', trend: 'up' },
-    { name: 'Total Dsp', value: stats?.roles?.dsp, icon: Users, change: '+23%', trend: 'up' },
-    { name: 'Total Orders', value: stats?.orders?.total, icon: Users, change: '+23%', trend: 'up' },
+  const recentActivities = [
+    { id: 1, user: 'John Doe', action: 'placed a new order', time: '2 minutes ago', icon: ShoppingCart },
+    { id: 2, user: 'Jane Smith', action: 'registered as a merchant', time: '15 minutes ago', icon: Users },
+    { id: 3, user: 'System', action: 'completed scheduled maintenance', time: '1 hour ago', icon: Server },
+    { id: 4, user: 'Robert Johnson', action: 'reported an issue', time: '3 hours ago', icon: AlertCircle },
   ];
+
+  // Define stats cards using fetched data
+const statsCards = [
+  { name: 'Total Users', value: stats?.totalUsers || '0', icon: Users, change: '+12%', trend: 'up' },
+  { name: 'Total Merchants', value: stats?.roles?.merchant || '0', icon: ShoppingCart, change: '+5%', trend: 'up' },
+  { name: 'Total DSPs', value: stats?.roles?.dsp || '0', icon: Truck, change: '+23%', trend: 'up' },
+  { name: 'Total Orders', value: stats?.orders?.total || '0', icon: Package, change: '+23%', trend: 'up' },
+];
 
   return (
     <div className="space-y-6">
@@ -447,8 +449,16 @@ function OverviewSection() {
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{stat.name}</p>
                 <p className="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{stat.value}</p>
                 <div className={`flex items-center mt-2 ${stat.trend === 'up' ? 'text-emerald-500' : 'text-red-500'}`}>
-                  <stat.icon className="h-4 w-4 mr-1" />
-                  <span className="text-xs">{stat.change}</span>
+                  {stat.trend === 'up' ? (
+                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M12 7a1 1 0 01-1-1V5.414l-4.293 4.293a1 1 0 01-1.414-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L13 5.414V6a1 1 0 01-1 1z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M12 13a1 1 0 100-2H5.414l4.293-4.293a1 1 0 00-1.414-1.414l-6 6a1 1 0 000 1.414l6 6a1 1 0 001.414-1.414L5.414 13H12z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  <span className="text-xs font-medium ml-1">{stat.change}</span>
                 </div>
               </div>
               <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500">
@@ -458,109 +468,90 @@ function OverviewSection() {
           </div>
         ))}
       </div>
-
-      {/* User Growth Chart */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">User Growth</h3>
-          <button className="text-sm px-3 py-1 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 flex items-center">
-            <Download className="h-4 w-4 mr-1" />
-            Export
-          </button>
-        </div>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={userGrowthData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="users" fill="#8884d8" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Pie Chart */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Delivery Status</h3>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={pieData} cx="50%" cy="50%" labelLine={false} outerRadius={80} fill="#8884d8" dataKey="value">
-                {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="mt-4 space-y-2">
-          {pieData.map((item, index) => (
-            <div key={index} className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="h-3 w-3 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                <span className="text-sm text-gray-600 dark:text-gray-300">{item.name}</span>
+    {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+        {/* Pie Chart */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Delivery Status</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={pieData} cx="50%" cy="50%" labelLine={false} outerRadius={80} fill="#8884d8" dataKey="value">
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-4 space-y-2">
+            {pieData.map((item, index) => (
+              <div key={index} className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className={`h-3 w-3 rounded-full mr-2`} style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">{item.name}</span>
+                </div>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">{item.value}%</span>
               </div>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">{item.value}%</span>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        {/* User Growth Section - Spanning Two Columns */}
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">User Growth</h3>
+            <button className="text-sm px-3 py-1 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 flex items-center">
+              <Download className="h-4 w-4 mr-1" />
+              Export
+            </button>
+          </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={userGrowthData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="users" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
+
+
+
     </div>
   );
 }
 
 
-
 // Users Section Component
 function UsersSection() {
-  const { getFilteredUsers, setFilter, refresh } = useUsers();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 2; // Number of items to display per page
-
-  const handleSearchChange = (event) => {
-    setSearchTerm(event.target.value);
-    setFilter({ name: event.target.value, status: statusFilter === 'All' ? null : statusFilter });
-    setCurrentPage(1); // Reset to the first page when search term changes
-  };
-
-  const handleStatusChange = (event) => {
-    const status = event.target.value === 'All' ? null : event.target.value;
-    setStatusFilter(event.target.value);
-    setFilter({ name: searchTerm, status: status });
-    setCurrentPage(1); // Reset to the first page when status filter changes
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      await deleteUsers(id);
-      refresh();
-    } catch (error) {
-      console.error("Failed to delete the user:", error);
-    }
-  };
-
-  const users = getFilteredUsers();
-
-  // Calculate the index of the first and last item to display on the current page
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = users.slice(indexOfFirstItem, indexOfLastItem);
-
-  // Calculate the total number of pages
-  const totalPages = Math.ceil(users.length / itemsPerPage);
-
-  // Function to handle page changes
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const users = [
+    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Customer', status: 'active', lastLogin: '2 hours ago' },
+    { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'Merchant', status: 'active', lastLogin: '1 day ago' },
+    { id: 3, name: 'Robert Johnson', email: 'robert@example.com', role: 'DSP', status: 'pending', lastLogin: 'Never' },
+    { id: 4, name: 'Emily Davis', email: 'emily@example.com', role: 'Customer', status: 'active', lastLogin: '30 minutes ago' },
+    { id: 5, name: 'Michael Wilson', email: 'michael@example.com', role: 'Merchant', status: 'suspended', lastLogin: '1 week ago' },
+  ];
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h2>
+        <div className="flex space-x-3">
+          <button className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 flex items-center">
+            <Plus className="h-4 w-4 mr-2" />
+            Add User
+          </button>
+          <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center">
+            <Filter className="h-4 w-4 mr-2" />
+            Filter
+          </button>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -572,18 +563,12 @@ function UsersSection() {
             <input
               type="text"
               placeholder="Search users..."
-              value={searchTerm}
-              onChange={handleSearchChange}
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition duration-150"
             />
           </div>
           <div className="ml-4 flex items-center">
             <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">Status:</span>
-            <select
-              value={statusFilter}
-              onChange={handleStatusChange}
-              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-white dark:bg-gray-700"
-            >
+            <select className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-white dark:bg-gray-700">
               <option>All</option>
               <option>Active</option>
               <option>Pending</option>
@@ -608,13 +593,16 @@ function UsersSection() {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Status
                 </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Last Login
+                </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {currentItems.map((user) => (
+              {users.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -645,8 +633,12 @@ function UsersSection() {
                       {user.status}
                     </span>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.lastLogin}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button onClick={() => handleDelete(user._id)} className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
+                    <button className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 mr-3">
+                      Edit
+                    </button>
+                    <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
                       Delete
                     </button>
                   </td>
@@ -658,30 +650,19 @@ function UsersSection() {
 
         <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to <span className="font-medium">{Math.min(indexOfLastItem, users.length)}</span> of <span className="font-medium">{users.length}</span> results
+            Showing <span className="font-medium">1</span> to <span className="font-medium">5</span> of <span className="font-medium">24</span> results
           </div>
           <div className="flex space-x-2">
-            <button
-              onClick={() => paginate(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
-            >
+            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
               Previous
             </button>
-            {Array.from({ length: totalPages }, (_, index) => (
-              <button
-                key={index + 1}
-                onClick={() => paginate(index + 1)}
-                className={`px-3 py-1 border rounded-md ${currentPage === index + 1 ? 'border-emerald-500 bg-emerald-500 text-white hover:bg-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-              >
-                {index + 1}
-              </button>
-            ))}
-            <button
-              onClick={() => paginate(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
-            >
+            <button className="px-3 py-1 border border-emerald-500 bg-emerald-500 text-white rounded-md hover:bg-emerald-600">
+              1
+            </button>
+            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+              2
+            </button>
+            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
               Next
             </button>
           </div>
@@ -690,7 +671,6 @@ function UsersSection() {
     </div>
   );
 }
-
 
 // Deliveries Section Component
 // Deliveries Section Component
@@ -753,54 +733,26 @@ function DeliveriesSection() {
 }
 
 function MerchantSection() {
-  const { getFilteredMerchants, setFilter, refresh } = useUsers();
-  const [selectedMerchant, setSelectedMerchant] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; // Number of items to display per page
+   
+  const { merchants} = useUsers();
 
+   const [selectedMerchant, setSelectedMerchant] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+ 
   const openModal = (merchant) => {
     setSelectedMerchant(merchant);
     setIsModalOpen(true);
   };
+  console.log(selectedMerchant);
 
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedMerchant(null);
   };
-
-  const handleDelete = async (id) => {
-    try {
-      await deleteUsers(id);
-      refresh(); // Refresh the list of merchants after deletion
-    } catch (error) {
-      console.error("Failed to delete the merchant:", error);
-    }
-  };
-
-  const handleSearchChange = (event) => {
-    setFilter({ name: event.target.value, status: null });
-    setCurrentPage(1); // Reset to the first page when search term changes
-  };
-
-  const handleStatusChange = (event) => {
-    const status = event.target.value === 'All' ? null : event.target.value;
-    setFilter({ name: '', status: status });
-    setCurrentPage(1); // Reset to the first page when status filter changes
-  };
-
-  const merchants = getFilteredMerchants();
-
-  // Calculate the index of the first and last item to display on the current page
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = merchants.slice(indexOfFirstItem, indexOfLastItem);
-
-  // Calculate the total number of pages
-  const totalPages = Math.ceil(merchants.length / itemsPerPage);
-
-  // Function to handle page changes
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+const handleStatusUpdate = (updatedMerchant) => {
+  // Logic to handle the updated merchant
+  console.log('Updated merchant:', updatedMerchant);
+};
 
   return (
     <div className="space-y-6">
@@ -817,19 +769,15 @@ function MerchantSection() {
             <input
               type="text"
               placeholder="Search Merchants..."
-              onChange={handleSearchChange}
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition duration-150"
             />
           </div>
           <div className="ml-4 flex items-center">
             <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">Status:</span>
-            <select
-              onChange={handleStatusChange}
-              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-white dark:bg-gray-700"
-            >
+            <select className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-white dark:bg-gray-700">
               <option>All</option>
               <option>Approved</option>
-              <option>pending</option>
+              <option>Pending</option>
               <option>Suspended</option>
             </select>
           </div>
@@ -843,11 +791,12 @@ function MerchantSection() {
                   Name
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Business Name
+                  Buisness Name
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Email
                 </th>
+
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Status
                 </th>
@@ -857,7 +806,7 @@ function MerchantSection() {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {currentItems.map((user) => (
+              {merchants.map((user) => (
                 <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -869,7 +818,7 @@ function MerchantSection() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300">
                         {user.merchantDetails?.storeName.charAt(0)}
@@ -890,8 +839,8 @@ function MerchantSection() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button onClick={() => openModal(user)}>View Details</button>
-                    <button onClick={() => handleDelete(user._id)} className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
+                     <button onClick={() => openModal(user)}>View Details</button>
+                     <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
                       Delete
                     </button>
                   </td>
@@ -899,39 +848,30 @@ function MerchantSection() {
               ))}
             </tbody>
           </table>
-          <MerchantDetailModal
-            merchant={selectedMerchant}
-            isOpen={isModalOpen}
-            onClose={closeModal}
+          <MerchantDetailModal 
+           merchant={selectedMerchant} 
+           isOpen={isModalOpen} 
+           onClose={closeModal} 
+           onStatusUpdate={handleStatusUpdate}
+
           />
         </div>
 
         <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to <span className="font-medium">{Math.min(indexOfLastItem, merchants.length)}</span> of <span className="font-medium">{merchants.length}</span> results
+            Showing <span className="font-medium">1</span> to <span className="font-medium">5</span> of <span className="font-medium">24</span> results
           </div>
           <div className="flex space-x-2">
-            <button
-              onClick={() => paginate(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
-            >
+            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
               Previous
             </button>
-            {Array.from({ length: totalPages }, (_, index) => (
-              <button
-                key={index + 1}
-                onClick={() => paginate(index + 1)}
-                className={`px-3 py-1 border rounded-md ${currentPage === index + 1 ? 'border-emerald-500 bg-emerald-500 text-white hover:bg-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-              >
-                {index + 1}
-              </button>
-            ))}
-            <button
-              onClick={() => paginate(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
-            >
+            <button className="px-3 py-1 border border-emerald-500 bg-emerald-500 text-white rounded-md hover:bg-emerald-600">
+              1
+            </button>
+            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+              2
+            </button>
+            <button className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
               Next
             </button>
           </div>
@@ -940,10 +880,6 @@ function MerchantSection() {
     </div>
   );
 }
-
- // Ensure you have the Search icon imported
-// Adjust the import path as necessary
-
 
 function DspSection() {
   const { getFilteredDsps, setFilter, refresh } = useUsers();
@@ -961,7 +897,10 @@ function DspSection() {
     setIsModalOpen(false);
     setSelectedDsp(null);
   };
-
+const handleStatusUpdate = (updatedMerchant) => {
+  // Logic to handle the updated merchant
+  console.log('Updated merchant:', updatedMerchant);
+};
   const handleDelete = async (id) => {
     try {
       await deleteUsers(id);
@@ -1097,6 +1036,7 @@ function DspSection() {
             dsp={selectedDsp}
             isOpen={isModalOpen}
             onClose={closeModal}
+            onStatusUpdate={handleStatusUpdate}
           />
         </div>
 
@@ -1137,4 +1077,248 @@ function DspSection() {
   );
 }
 
+function SettingsSection() {
+  const [settings, setSettings] = useState({
+    bankAccounts: [{ bankName: '', bankAccountNumber: '' }],
+    registrationPriceMerchant: '',
+    registrationPriceDSP: '',
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [isCreate, setIsCreate] = useState(false); // true if no settings exist
+  const [showForm, setShowForm] = useState(false); // controls form vs summary
 
+  useEffect(() => {
+    const loadSettings = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchPlatformSettings();
+        setSettings({
+          bankAccounts: Array.isArray(data.bankAccounts) && data.bankAccounts.length > 0 ? data.bankAccounts : [{ bankName: '', bankAccountNumber: '' }],
+          registrationPriceMerchant: data.registrationPriceMerchant || '',
+          registrationPriceDSP: data.registrationPriceDSP || '',
+        });
+        setIsCreate(false);
+      } catch (err) {
+        if (err.response && err.response.status === 404) {
+          setIsCreate(true);
+          setSettings({
+            bankAccounts: [{ bankName: '', bankAccountNumber: '' }],
+            registrationPriceMerchant: '',
+            registrationPriceDSP: '',
+          });
+        } else {
+          setError('Failed to load platform settings.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadSettings();
+  }, [showForm, success]); // reload when form is closed or after save
+
+  // --- Bank Accounts Handlers ---
+  const handleBankAccountChange = (idx, field, value) => {
+    setSettings((prev) => {
+      const updated = [...prev.bankAccounts];
+      updated[idx][field] = value;
+      return { ...prev, bankAccounts: updated };
+    });
+  };
+
+  const handleAddBankAccount = () => {
+    setSettings((prev) => ({
+      ...prev,
+      bankAccounts: [...prev.bankAccounts, { bankName: '', bankAccountNumber: '' }],
+    }));
+  };
+
+  const handleRemoveBankAccount = (idx) => {
+    setSettings((prev) => {
+      const updated = prev.bankAccounts.filter((_, i) => i !== idx);
+      return { ...prev, bankAccounts: updated.length > 0 ? updated : [{ bankName: '', bankAccountNumber: '' }] };
+    });
+  };
+
+  // --- Other Handlers ---
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setSettings((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      await updatePlatformSettings({
+        bankAccounts: settings.bankAccounts,
+        registrationPriceMerchant: Number(settings.registrationPriceMerchant),
+        registrationPriceDSP: Number(settings.registrationPriceDSP),
+      });
+      setSuccess(isCreate ? 'Platform settings created successfully.' : 'Platform settings updated successfully.');
+      setIsCreate(false);
+      setShowForm(false);
+    } catch (err) {
+      setError('Failed to save platform settings.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Summary view
+  if (!showForm) {
+    return (
+      <div className="max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 border border-gray-200 dark:border-gray-700">
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Platform Settings</h2>
+        {loading ? (
+          <div>Loading...</div>
+        ) : error ? (
+          <div className="text-red-600 dark:text-red-400 mb-4">{error}</div>
+        ) : (
+          <>
+            {isCreate ? (
+              <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded">
+                No platform settings found. Please create them.
+              </div>
+            ) : (
+              <div className="mb-6 space-y-0 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner p-6 border border-gray-100 dark:border-gray-600">
+                <div className="mb-4">
+                  <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold tracking-wider mb-2 flex items-center">
+                    <Banknote className="h-6 w-6 text-emerald-500 mr-2" /> Bank Accounts
+                  </div>
+                  {settings.bankAccounts.map((acc, idx) => (
+                    <div key={idx} className="mb-2 p-3 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 flex flex-col md:flex-row md:items-center gap-2">
+                      <span className="font-semibold text-gray-900 dark:text-white">{acc.bankName}</span>
+                      <span className="text-gray-700 dark:text-gray-300">{acc.bankAccountNumber}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t border-gray-200 dark:border-gray-600 my-3" />
+                <div className="flex items-center mb-4">
+                  <DollarSign className="h-6 w-6 text-purple-500 mr-3" />
+                  <div>
+                    <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold tracking-wider">Merchant Registration Price</div>
+                    <div className="text-lg font-semibold text-emerald-700 dark:text-emerald-300">{settings.registrationPriceMerchant}</div>
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <DollarSign className="h-6 w-6 text-yellow-500 mr-3" />
+                  <div>
+                    <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold tracking-wider">DSP Registration Price</div>
+                    <div className="text-lg font-semibold text-yellow-700 dark:text-yellow-300">{settings.registrationPriceDSP}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {success && <div className="text-green-600 dark:text-green-400 mb-4">{success}</div>}
+            <button
+              className="w-full py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-md shadow disabled:opacity-50"
+              onClick={() => setShowForm(true)}
+            >
+              {isCreate ? 'Create Settings' : 'Edit Settings'}
+            </button>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // Form view
+  return (
+    <div className="max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 border border-gray-200 dark:border-gray-700">
+      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">{isCreate ? 'Create Platform Settings' : 'Edit Platform Settings'}</h2>
+      <form onSubmit={handleSave} className="space-y-6">
+        <div>
+          <div className="flex items-center mb-2">
+            <Banknote className="h-6 w-6 text-emerald-500 mr-2" />
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Bank Accounts</span>
+          </div>
+          {settings.bankAccounts.map((acc, idx) => (
+            <div key={idx} className="flex flex-col md:flex-row md:items-center gap-2 mb-2 p-3 rounded bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
+              <input
+                type="text"
+                placeholder="Bank Name"
+                value={acc.bankName}
+                onChange={e => handleBankAccountChange(idx, 'bankName', e.target.value)}
+                className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Bank Account Number"
+                value={acc.bankAccountNumber}
+                onChange={e => handleBankAccountChange(idx, 'bankAccountNumber', e.target.value)}
+                className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                required
+              />
+              {settings.bankAccounts.length > 1 && (
+                <button
+                  type="button"
+                  className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-bold px-2"
+                  onClick={() => handleRemoveBankAccount(idx)}
+                  title="Remove this bank account"
+                >
+                  &times;
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            className="mt-2 px-4 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-md font-medium hover:bg-blue-200 dark:hover:bg-blue-800"
+            onClick={handleAddBankAccount}
+          >
+            + Add Bank Account
+          </button>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Merchant Registration Price</label>
+          <input
+            type="number"
+            name="registrationPriceMerchant"
+            value={settings.registrationPriceMerchant}
+            onChange={handleChange}
+            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            min="0"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">DSP Registration Price</label>
+          <input
+            type="number"
+            name="registrationPriceDSP"
+            value={settings.registrationPriceDSP}
+            onChange={handleChange}
+            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            min="0"
+            required
+          />
+        </div>
+        {error && <div className="text-red-600 dark:text-red-400">{error}</div>}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            className="w-1/2 py-2 px-4 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold rounded-md shadow hover:bg-gray-300 dark:hover:bg-gray-600"
+            onClick={() => { setShowForm(false); setSuccess(null); setError(null); }}
+            disabled={saving}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="w-1/2 py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-md shadow disabled:opacity-50"
+            disabled={saving}
+          >
+            {saving ? (isCreate ? 'Creating...' : 'Updating...') : (isCreate ? 'Create Settings' : 'Update Settings')}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}

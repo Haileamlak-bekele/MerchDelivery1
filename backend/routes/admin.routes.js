@@ -2,8 +2,10 @@ const express = require("express");
 const {
   getAllUsers,getUserById,deleteUser,getAllMerchants,getPlatformStats,updateUserStatus, setDeliveryPricing,
   getDeliveryPricing,
-
-  getAllDSPs} = require("../controllers/admin.controller.js");
+  getAllDSPs,
+  getPlatformSettings,
+  updatePlatformSettings
+} = require("../controllers/admin.controller.js");
 const { protect, authorizeRoles } = require("../middleware/auth.middleware.js");
 
 const router = express.Router();
@@ -21,5 +23,7 @@ router.put("/approve/:id", updateUserStatus); // Approve or reject merchant/DSP
 router.get("/deliveryPricing",getDeliveryPricing);
 router.put("/deliveryPricing", setDeliveryPricing); // Set delivery pricing
 router.get("/stats", getPlatformStats);
+router.get("/platform-settings", getPlatformSettings);
+router.put("/platform-settings", updatePlatformSettings);
 
 module.exports = router;

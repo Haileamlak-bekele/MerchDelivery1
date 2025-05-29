@@ -25,6 +25,10 @@ const merchantSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+    paymentProof: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );

@@ -3,58 +3,52 @@ import { Edit, Trash2, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { API_BASE_URL } from '../../config';
 
 function getImageUrl(imagePath, baseUrl = API_BASE_URL) {
-  console.log('Original image path:', imagePath);
-  console.log('Base URL:', baseUrl);
-  
   if (!imagePath) {
-    console.log('No image path provided, using placeholder');
     return 'https://placehold.co/60x60/7F848A/FFFFFF?text=N/A';
   }
-  
-  // If it's already a full URL, return it
+
   if (imagePath.startsWith('http')) {
-    console.log('Full URL detected:', imagePath);
     return imagePath;
   }
-  
-  // If it's a relative path starting with /uploads, just prepend the base URL
+
   if (imagePath.startsWith('/uploads')) {
-    const finalUrl = `${baseUrl}${imagePath}`;
-    console.log('Relative path with /uploads:', finalUrl);
-    return finalUrl;
+    return `${baseUrl}${imagePath}`;
   }
-  
-  // For other cases, normalize the path
+
   let normalizedPath = imagePath
     .replace(/\\/g, '/')
     .replace(/\/+/g, '/')
     .replace(/^[/.]+/, '')
     .replace(/^uploads/, '/uploads')
     .replace(/^\/?/, '/');
-    
-  const finalUrl = `${baseUrl}${normalizedPath}`;
-  console.log('Normalized path:', normalizedPath);
-  console.log('Final URL:', finalUrl);
-  return finalUrl;
+
+  return `${baseUrl}${normalizedPath}`;
 }
 
 export default function InventoryTable({ items, onEdit, onDelete }) {
+  const isLightMode = true; // Set to light mode by default
+
   const getStatus = (stock) => {
     if (stock === 0) return { text: 'Out of Stock', color: 'red', icon: XCircle };
     if (stock < 10) return { text: 'Low Stock', color: 'yellow', icon: AlertCircle };
     return { text: 'In Stock', color: 'green', icon: CheckCircle };
   };
+
   const statusColorClasses = {
-    red: 'bg-red-500/10 text-red-400',
-    yellow: 'bg-yellow-500/10 text-yellow-400 animate-pulse-fast',
-    green: 'bg-green-500/10 text-green-400',
+    red: 'bg-red-200 text-red-600',
+    yellow: 'bg-yellow-200 text-yellow-600 animate-pulse-fast',
+    green: 'bg-green-200 text-green-600',
   };
 
+  const tableClasses = 'bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden text-gray-700';
+  const headerClasses = 'text-xs text-gray-600 uppercase bg-gray-100';
+  const rowClasses = 'border-b border-gray-200 hover:bg-gray-100 transition duration-150 ease-in-out';
+
   return (
-    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg shadow-lg overflow-hidden">
+    <div className={tableClasses}>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] text-sm text-left text-gray-300">
-          <thead className="text-xs text-gray-400 uppercase bg-gray-700/30">
+        <table className="w-full min-w-[640px] text-sm text-left">
+          <thead className={headerClasses}>
             <tr>
               <th className="px-4 py-3">Image</th>
               <th className="px-6 py-3">Product Name</th>
@@ -75,22 +69,19 @@ export default function InventoryTable({ items, onEdit, onDelete }) {
                 const status = getStatus(item.stock_quantity);
                 const itemKey = item.id || item._id || `item-${Math.random()}`;
                 return (
-                  <tr key={itemKey} className="border-b border-gray-700/50 hover:bg-gray-700/20 transition duration-150 ease-in-out">
+                  <tr key={itemKey} className={rowClasses}>
                     <td className="px-4 py-2">
-                      {console.log('Rendering image for item:', item.name, 'Image path:', item.image)}
                       <img
                         src={getImageUrl(item.image)}
-                        className="w-12 h-12 object-cover rounded-md border border-gray-600"
+                        className="w-12 h-12 object-cover rounded-md border border-gray-200"
                         onError={(e) => {
-                          console.error('Image failed to load:', item.image);
-                          console.error('Attempted URL:', e.target.src);
                           e.target.onerror = null;
                           e.target.src = 'https://placehold.co/60x60/7F848A/FFFFFF?text=Error';
                         }}
                         alt={item.name || 'Product'}
                       />
                     </td>
-                    <td className="px-6 py-4 font-medium text-white whitespace-nowrap">{item.name}</td>
+                    <td className="px-6 py-4 font-medium whitespace-nowrap">{item.name}</td>
                     <td className="px-6 py-4">{item.category}</td>
                     <td className="px-6 py-4">${item.price?.toFixed(2)}</td>
                     <td className="px-6 py-4">{item.stock_quantity}</td>
@@ -101,10 +92,10 @@ export default function InventoryTable({ items, onEdit, onDelete }) {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center whitespace-nowrap">
-                      <button onClick={() => onEdit(item)} className="text-indigo-400 hover:text-indigo-300 mr-3" title="Edit Item">
+                      <button onClick={() => onEdit(item)} className="text-green-500 hover:text-green-400 mr-3" title="Edit Item">
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button onClick={() => onDelete(item.id || item._id)} className="text-red-400 hover:text-red-300" title="Delete Item">
+                      <button onClick={() => onDelete(item.id || item._id)} className="text-red-500 hover:text-red-400" title="Delete Item">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </td>

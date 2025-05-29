@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Download, CheckCircle, XCircle } from 'react-feather';
 import { API_BASE_URL } from '../config';
-import { updateMerchantStatus } from '../service/User';// Assuming you have a similar service for DSPs
+import { updateMerchantStatus } from '../service/User'; // Assuming you have a similar service for DSPs
 
 const DSPDetailModal = ({ dsp, isOpen, onClose, onStatusUpdate }) => {
   const [verificationStatus, setVerificationStatus] = useState(null);
   const [verificationNote, setVerificationNote] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState(null);
+  const [currentImage, setCurrentImage] = useState('drivingLicense'); // Track the current image being displayed
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) {
@@ -24,10 +25,10 @@ const DSPDetailModal = ({ dsp, isOpen, onClose, onStatusUpdate }) => {
 
     const normalizedPath = imagePath
       .replace(/\\/g, '/')
-      .replace(/\/+/g, '/')
+      .replace(/[/]+/g, '/')
       .replace(/^[/.]+/, '')
       .replace(/^uploads/, '/uploads')
-      .replace(/^\/?/, '/');
+      .replace(/^[/?]+/, '/');
 
     return `${API_BASE_URL}${normalizedPath}`;
   };
@@ -60,26 +61,20 @@ const DSPDetailModal = ({ dsp, isOpen, onClose, onStatusUpdate }) => {
     setUpdateError(null);
   };
 
-  const handleDownload = () => {
-    // Get the image URL
-    const imageUrl = getImageUrl(dsp.dspDetails?.drivingLicense);
+  const handleDownload = (imagePath, fileNamePrefix) => {
+    const imageUrl = getImageUrl(imagePath);
 
-    // Don't try to download placeholder images
     if (!imageUrl || imageUrl.includes('placehold.co')) {
       alert('No document available to download');
       return;
     }
 
-    // Create a temporary link element
     const link = document.createElement('a');
     link.href = imageUrl;
-    link.download = `${dsp.name.replace(/\s+/g, '-')}-driving-license.jpg`;
+    link.download = `${fileNamePrefix}.jpg`;
 
-    // Trigger the download
     document.body.appendChild(link);
     link.click();
-
-    // Clean up
     document.body.removeChild(link);
   };
 
@@ -93,7 +88,7 @@ const DSPDetailModal = ({ dsp, isOpen, onClose, onStatusUpdate }) => {
       setIsUpdating(true);
       const updatedDSP = await updateMerchantStatus(dsp._id, {
         status: verificationStatus,
-        note: verificationNote
+        note: verificationNote,
       });
       onStatusUpdate(updatedDSP);
       onClose();
@@ -106,15 +101,11 @@ const DSPDetailModal = ({ dsp, isOpen, onClose, onStatusUpdate }) => {
   };
 
   if (!isOpen || !dsp) return null;
-console.log(dsp)
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div
-          className="fixed inset-0 transition-opacity"
-          aria-hidden="true"
-          onClick={onClose}
-        >
+        <div className="fixed inset-0 transition-opacity" aria-hidden="true" onClick={onClose}>
           <div className="absolute inset-0 bg-gray-500 dark:bg-gray-900 opacity-75"></div>
         </div>
 
@@ -125,25 +116,39 @@ console.log(dsp)
               <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                    Driving License
+                    {currentImage === 'drivingLicense' ? 'Driving License' : 'Payment Screenshot'}
                   </h3>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setCurrentImage('drivingLicense')}
+                      className={`px-3 py-1 rounded-md text-sm font-medium ${currentImage === 'drivingLicense' ? 'bg-emerald-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200'}`}
+                    >
+                      Driving License
+                    </button>
+                    <button
+                      onClick={() => setCurrentImage('paymentProof')}
+                      className={`px-3 py-1 rounded-md text-sm font-medium ${currentImage === 'paymentProof' ? 'bg-emerald-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200'}`}
+                    >
+                      Payment Screenshot
+                    </button>
+                  </div>
                 </div>
 
                 <div className="relative bg-black rounded-md overflow-hidden" style={{ height: '400px' }}>
                   <img
-                    src={getImageUrl(dsp.DspDetails?.drivingLicense)}
-                    alt="Driving License document"
+                    src={getImageUrl(dsp.DspDetails?.[currentImage])}
+                    alt={currentImage === 'drivingLicense' ? 'Driving License document' : 'Payment Screenshot'}
                     className="w-full h-full object-contain"
                   />
                 </div>
 
                 <div className="mt-4 flex justify-between items-center">
                   <button
-                    onClick={handleDownload}
+                    onClick={() => handleDownload(dsp.DspDetails?.[currentImage], `${dsp.name.replace(/\s+/g, '-')}-${currentImage}`)}
                     className="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    Download
+                    Open
                   </button>
                 </div>
               </div>
@@ -169,7 +174,7 @@ console.log(dsp)
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{dsp.email}</p>
-                    </div> 
+                    </div>
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Registration Date</p>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
@@ -182,7 +187,7 @@ console.log(dsp)
                         {dsp.DspDetails?.deliveryStatus}
                       </p>
                     </div>
-                    <div className='mb-6'> 
+                    <div className="mb-6">
                       <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
                       <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
                         {dsp.DspDetails?.approvalStatus}
@@ -194,11 +199,7 @@ console.log(dsp)
                 {/* Verification section */}
                 <div className="mb-6">
                   <div className="space-y-4">
-
-
-                    {updateError && (
-                      <div className="text-red-500 text-sm">{updateError}</div>
-                    )}
+                    {updateError && <div className="text-red-500 text-sm">{updateError}</div>}
 
                     <div className="flex space-x-3">
                       <button

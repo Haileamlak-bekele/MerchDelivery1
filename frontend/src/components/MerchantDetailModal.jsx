@@ -8,27 +8,28 @@ const MerchantDetailModal = ({ merchant, isOpen, onClose, onStatusUpdate }) => {
   const [verificationNote, setVerificationNote] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState(null);
+  const [currentImage, setCurrentImage] = useState('tradeLicense'); // Track the current image being displayed
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) {
       return 'https://placehold.co/60x60/7F848A/FFFFFF?text=N/A';
     }
-    
+
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
-    
+
     if (imagePath.startsWith('/uploads')) {
       return `${API_BASE_URL}${imagePath}`;
     }
-    
+
     const normalizedPath = imagePath
       .replace(/\\/g, '/')
-      .replace(/\/+/g, '/')
+      .replace(/[/]+/g, '/')
       .replace(/^[/.]+/, '')
       .replace(/^uploads/, '/uploads')
-      .replace(/^\/?/, '/');
-      
+      .replace(/^[/?]+/, '/');
+
     return `${API_BASE_URL}${normalizedPath}`;
   };
 
@@ -60,28 +61,22 @@ const MerchantDetailModal = ({ merchant, isOpen, onClose, onStatusUpdate }) => {
     setUpdateError(null);
   };
 
-  const handleDownload = () => {
-  // Get the image URL
-  const imageUrl = getImageUrl(merchant.merchantDetails?.tradeLicense);
+  const handleDownload = (imagePath, fileNamePrefix) => {
+    const imageUrl = getImageUrl(imagePath);
 
-  // Don't try to download placeholder images
-  if (!imageUrl || imageUrl.includes('placehold.co')) {
-    alert('No document available to download');
-    return;
-  }
+    if (!imageUrl || imageUrl.includes('placehold.co')) {
+      alert('No document available to download');
+      return;
+    }
 
-  // Create a temporary link element
-  const link = document.createElement('a');
-  link.href = imageUrl;
-  link.download = `${merchant.name.replace(/\s+/g, '-')}-business-license.jpg`;
-  
-  // Trigger the download
-  document.body.appendChild(link);
-  link.click();
-  
-  // Clean up
-  document.body.removeChild(link);
-};
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = `${fileNamePrefix}.jpg`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleStatusUpdate = async () => {
     if (!verificationStatus) {
@@ -91,10 +86,11 @@ const MerchantDetailModal = ({ merchant, isOpen, onClose, onStatusUpdate }) => {
 
     try {
       setIsUpdating(true);
-      const updatedMerchant = await updateMerchantStatus(merchant._id, { 
+      const updatedMerchant = await updateMerchantStatus(merchant._id, {
         status: verificationStatus,
-        note: verificationNote 
+        note: verificationNote,
       });
+      onStatusUpdate(updatedMerchant);
       onClose();
     } catch (error) {
       setUpdateError('Failed to update merchant status. Please try again.');
@@ -109,11 +105,7 @@ const MerchantDetailModal = ({ merchant, isOpen, onClose, onStatusUpdate }) => {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div 
-          className="fixed inset-0 transition-opacity" 
-          aria-hidden="true"
-          onClick={onClose}
-        >
+        <div className="fixed inset-0 transition-opacity" aria-hidden="true" onClick={onClose}>
           <div className="absolute inset-0 bg-gray-500 dark:bg-gray-900 opacity-75"></div>
         </div>
 
@@ -124,25 +116,43 @@ const MerchantDetailModal = ({ merchant, isOpen, onClose, onStatusUpdate }) => {
               <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                    Business License
+                    {currentImage === 'tradeLicense' ? 'Business License' : 'Payment Screenshot'}
                   </h3>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setCurrentImage('tradeLicense')}
+                      className={`px-3 py-1 rounded-md text-sm font-medium ${
+                        currentImage === 'tradeLicense' ? 'bg-emerald-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200'
+                      }`}
+                    >
+                      Business License
+                    </button>
+                    <button
+                      onClick={() => setCurrentImage('paymentProof')}
+                      className={`px-3 py-1 rounded-md text-sm font-medium ${
+                        currentImage === 'paymentProof' ? 'bg-emerald-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200'
+                      }`}
+                    >
+                      Payment Screenshot
+                    </button>
+                  </div>
                 </div>
 
                 <div className="relative bg-black rounded-md overflow-hidden" style={{ height: '400px' }}>
-                  <img 
-                    src={getImageUrl(merchant.merchantDetails?.tradeLicense)} 
-                    alt="Business License document"
+                  <img
+                    src={getImageUrl(merchant.merchantDetails?.[currentImage])}
+                    alt={currentImage === 'tradeLicense' ? 'Business License document' : 'Payment Screenshot'}
                     className="w-full h-full object-contain"
                   />
                 </div>
 
                 <div className="mt-4 flex justify-between items-center">
                   <button
-                    onClick={handleDownload}
+                    onClick={() => handleDownload(merchant.merchantDetails?.[currentImage], `${merchant.name.replace(/\s+/g, '-')}-${currentImage}`)}
                     className="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    Download
+                    Open
                   </button>
                 </div>
               </div>
@@ -156,7 +166,7 @@ const MerchantDetailModal = ({ merchant, isOpen, onClose, onStatusUpdate }) => {
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Merchant</p>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{merchant.name}</p>
-                    </div>                    
+                    </div>
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Business Name</p>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{merchant.merchantDetails?.storeName}</p>
@@ -168,7 +178,7 @@ const MerchantDetailModal = ({ merchant, isOpen, onClose, onStatusUpdate }) => {
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{merchant.email}</p>
-                    </div>                                        
+                    </div>
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Registration Date</p>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
@@ -177,16 +187,16 @@ const MerchantDetailModal = ({ merchant, isOpen, onClose, onStatusUpdate }) => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Location</p>
-                    {merchant.merchantDetails?.location && (
-  <p>
-    Location: 
-    Lat: {merchant.merchantDetails.location.lat}, 
-    Lng: {merchant.merchantDetails.location.lng}
-  </p>
-)}
+                      {merchant.merchantDetails?.location && (
+                        <p>
+                          Location:
+                          Lat: {merchant.merchantDetails.location.lat},
+                          Lng: {merchant.merchantDetails.location.lng}
+                        </p>
+                      )}
                     </div>
-                    <div className='mb-6'>
-                      <p className="text-sm text-gray-500  dark:text-gray-400">Status</p>
+                    <div className="mb-6">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
                       <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
                         {merchant.merchantDetails?.approvalStatus}
                       </p>
@@ -195,13 +205,9 @@ const MerchantDetailModal = ({ merchant, isOpen, onClose, onStatusUpdate }) => {
                 </div>
 
                 {/* Verification section */}
-                <div className="mb-6">                 
+                <div className="mb-6">
                   <div className="space-y-4">
-
-
-                    {updateError && (
-                      <div className="text-red-500 text-sm">{updateError}</div>
-                    )}
+                    {updateError && <div className="text-red-500 text-sm">{updateError}</div>}
 
                     <div className="flex space-x-3">
                       <button
@@ -230,7 +236,7 @@ const MerchantDetailModal = ({ merchant, isOpen, onClose, onStatusUpdate }) => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
             <button
               type="button"

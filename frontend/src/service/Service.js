@@ -67,15 +67,22 @@ export const fetchTransactionsByAccountId = async (accountId) => {
   }
 };
 
-// reportService.js
- // Replace with your actual API URL
-
-export const createReport = async (reportData) => {
+export const fetchPlatformSettings = async () => {
   try {
-    const response = await axios.post(API_URL, reportData);
+    const response = await api.get('/admin/platform-settings');
     return response.data;
   } catch (error) {
-    console.error('Error creating report:', error);
+    console.error('Error fetching platform settings:', error);
+    throw error;
+  }
+};
+
+export const updatePlatformSettings = async (settings) => {
+  try {
+    const response = await api.put('/admin/platform-settings', settings);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating platform settings:', error);
     throw error;
   }
 };

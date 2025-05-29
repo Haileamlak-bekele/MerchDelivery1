@@ -220,26 +220,34 @@ export const useAuthForm = () => {
                 response = await axios.post(`${API_BASE_URL}/users/add`, formDataToSend, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-            }else if (selectedRole === ROLES.CUSTOMER) {
-    response = await axios.post(`${API_BASE_URL}/users/add`, {
-        name: formData.name,
-        email: formData.email,
-        phoneNumber: formData.phone,
-        password: formData.password,
-        role: selectedRole
-    }, {
-        headers: { 'Content-Type': 'application/json' }
-    });
-}
-
-            if (response.data) {
-                // Navigate to success page with role information
-                navigate('/registration-success', { 
-                    state: { 
-                        role: selectedRole,
-                        email: formData.email 
-                    } 
+            } else if (selectedRole === ROLES.CUSTOMER) {
+                // Customer registration
+                response = await axios.post(`${API_BASE_URL}/users/add`, {
+                    name: formData.name,
+                    email: formData.email,
+                    phoneNumber: formData.phone,
+                    password: formData.password,
+                    role: selectedRole
+                }, {
+                    headers: { 'Content-Type': 'application/json' }
                 });
+            }
+
+            if (response && response.data) {
+                // For merchant or DSP, if payment is needed, go to payment page
+                if (response.data.needsPayment && (selectedRole === ROLES.MERCHANT || selectedRole === ROLES.DSP)) {
+                    navigate('/payment', {
+                        state: {
+                            merchantId: response.data.merchantId,
+                            dspId: response.data.dspId,
+                            role: selectedRole,
+                            email: formData.email
+                        }
+                    });
+                } else if (selectedRole === ROLES.CUSTOMER) {
+                    // For customer, go to login page after registration
+                    navigate('/customer'); // or '/login' if that's your login route
+                }
             }
         } catch (error) {
             console.error('Signup error:', error);

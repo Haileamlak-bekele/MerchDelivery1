@@ -6,6 +6,7 @@ const path = require("path");
 const users = require("../src/config/model/Users.model.js");
 const merchant = require("../src/config/model/Merchant.model.js");
 const dsp = require("../src/config/model/DSP.model.js");
+const PlatformSettings = require("../src/config/model/PlatformSettings.model.js");
 
 // Configure multer for file upload
 const storage = multer.diskStorage({
@@ -59,10 +60,12 @@ const addUser = async (req, res) => {
             phoneNumber,
         });
 
+        let merchantId = null;
+        let dspId = null;
+
         try {
             const savedUser = await user.save();
 
-            // If the role is 'merchant', create the merchant record
             if (role === "merchant") {
                 // Parse location if sent as JSON string
                 let merchantLocation = location;
@@ -92,17 +95,18 @@ const addUser = async (req, res) => {
                     tradeLicense,
                 });
 
-                await newMerchant.save();
+                const savedMerchant = await newMerchant.save();
+                merchantId = savedMerchant._id;
             }
 
-            // If the role is 'dsp', create the dsp record
             if (role === "dsp") {
                 const newDsp = new dsp({
                     userId: savedUser._id,
                     vehicleDetails,
                     drivingLicense,
                 });
-                await newDsp.save();
+                const savedDsp = await newDsp.save();
+                dspId = savedDsp._id;
             }
         } catch (error) {
             console.error("Error saving user or merchant:", error);
@@ -118,6 +122,18 @@ const addUser = async (req, res) => {
             }
         );
 
+        // Fetch registration price from platform settings if merchant or dsp
+        let needsPayment = false;
+        let registrationPrice = 0;
+        if (user.role === "merchant" || user.role === "dsp") {
+            const settings = await PlatformSettings.findOne().sort({ updatedAt: -1 });
+            if (settings) {
+                if (user.role === "merchant") registrationPrice = settings.registrationPriceMerchant;
+                if (user.role === "dsp") registrationPrice = settings.registrationPriceDSP;
+            }
+            needsPayment = true;
+        }
+
         // Send response
         res.status(201).json({
             id: user._id,
@@ -127,6 +143,10 @@ const addUser = async (req, res) => {
             phoneNumber: user.phoneNumber,
             status: user.status,
             token,
+            needsPayment,
+            registrationPrice,
+            merchantId,
+            dspId,
         });
     } catch (err) {
         res.status(500).json({ message: "Server error", error: err.message });
@@ -185,20 +205,6 @@ const loginUser = async (req, res) => {
   }
 };
 
-//logout user
-const logoutUser = async (req, res) => {
-  try {
-    const userId = req.body.userId || req.user.id;
-    console.log("User ID for logout:", userId);
-    await users.findByIdAndUpdate(userId, {
-      isActive: false,
-      lastActive: new Date()
-    });
-    res.json({ message: "User logged out successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-};
 
 // Get all currently active DSPs
 const getActiveDsps = async (req, res) => {
@@ -224,18 +230,18 @@ const getActiveDsps = async (req, res) => {
 //     }
 // }
 
-const getUserById = async (req, res) => {
-    try {
-        const userId = req.params.id;
-        const user = await users.findById(userId);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        res.status(200).json(user);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching user', error });
-    }
-}
+// const getUserById = async (req, res) => {
+//     try {
+//         const userId = req.params.id;
+//         const user = await users.findById(userId);
+//         if (!user) {
+//             return res.status(404).json({ message: 'User not found' });
+//         }
+//         res.status(200).json(user);
+//     } catch (error) {
+//         res.status(500).json({ message: 'Error fetching user', error });
+//     }
+// }
 
 // const updateUser = async (req, res) => {
 //     try {
@@ -264,13 +270,49 @@ const getUserById = async (req, res) => {
 //     }
 // }
 
+// Payment proof upload for registration
+const uploadPaymentProof = [
+  upload.single('paymentProof'),
+  async (req, res) => {
+    const { merchantId, dspId } = req.body;
+    if (!merchantId && !dspId) {
+      return res.status(400).json({ message: 'merchantId or dspId is required' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+    try {
+      let updated;
+      if (merchantId) {
+        updated = await merchant.findByIdAndUpdate(
+          merchantId,
+          { $set: { paymentProof: req.file.path } },
+          { new: true }
+        );
+      } else if (dspId) {
+        updated = await dsp.findByIdAndUpdate(
+          dspId,
+          { $set: { paymentProof: req.file.path } },
+          { new: true }
+        );
+      }
+      if (!updated) {
+        return res.status(404).json({ message: 'User record not found for payment proof' });
+      }
+      res.json({ message: 'Payment proof uploaded', filePath: req.file.path });
+    } catch (err) {
+      res.status(500).json({ message: 'Error saving payment proof', error: err.message });
+    }
+  }
+];
+
 module.exports = {
   addUser,
   // getAllUsers,
-  getUserById,
+  // getUserById,
   // updateUser,
   // DeleteUser,
   loginUser,
   getActiveDsps,
-  logoutUser,
+  uploadPaymentProof,
 };

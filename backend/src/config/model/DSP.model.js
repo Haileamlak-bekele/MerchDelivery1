@@ -21,6 +21,10 @@ const dspSchema = new mongoose.Schema(
       enum: ["Available", "Unavailable"],
       default: "Available",
     },
+    paymentProof: {
+      type: String,
+      default: null,
+    },
     approvalStatus: {
       type: String,
       enum: ["pending", "approved", "rejected"],

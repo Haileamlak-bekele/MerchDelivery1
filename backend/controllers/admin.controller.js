@@ -4,6 +4,7 @@ const DSP = require("../src/config/model/DSP.model.js");
 const Order = require("../src/config/model/Order.model.js")
 const DeliveryPriceSettings = require("../src/config/model/DeliveryPricesetting.model.js");
 const PaymentAccountController = require("./paymentAccount.controller.js");
+const PlatformSettings = require("../src/config/model/PlatformSettings.model.js");
 
 // @desc Get all users
 const getAllUsers = async (req, res) => {
@@ -246,7 +247,6 @@ const getPlatformStats = async (req, res) => {
 };
 
 
-
 // @desc Admin updates approval status (approve/reject merchant/DSP)
 const updateUserStatus = async (req, res) => {
   const { id } = req.params; // User ID
@@ -296,7 +296,35 @@ const updateUserStatus = async (req, res) => {
   }
 };
 
+// @desc Get platform settings (bank info, registration prices)
+const getPlatformSettings = async (req, res) => {
+  try {
+    const settings = await PlatformSettings.findOne().sort({ updatedAt: -1 });
+    if (!settings) return res.status(404).json({ message: "Platform settings not found" });
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching platform settings", error: error.message });
+  }
+};
 
+// @desc Update platform settings (bank info, registration prices)
+const updatePlatformSettings = async (req, res) => {
+  const { bankAccounts, registrationPriceMerchant, registrationPriceDSP } = req.body;
+  const adminId = req.user.id;
+  try {
+    const newSettings = new PlatformSettings({
+      bankAccounts: Array.isArray(bankAccounts) ? bankAccounts : [],
+      registrationPriceMerchant,
+      registrationPriceDSP,
+      updatedBy: adminId,
+      updatedAt: new Date(),
+    });
+    await newSettings.save();
+    res.json({ message: "Platform settings updated", settings: newSettings });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating platform settings", error: error.message });
+  }
+};
 
 module.exports = {
   getAllUsers,
@@ -308,4 +336,6 @@ module.exports = {
   getPlatformStats,
   updateUserStatus,
   setDeliveryPricing,
+  getPlatformSettings,
+  updatePlatformSettings,
 };
