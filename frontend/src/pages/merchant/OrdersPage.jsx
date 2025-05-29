@@ -402,32 +402,7 @@ function OrderDetailsModal({ isOpen, onClose, order, onConfirm, inventoryItems, 
               </div>
             )}
           </div>
-          <div className="mt-4">
-    <label className="block text-sm font-medium text-gray-700 mb-1">Assign DSP:</label>
-    <select
-      className="w-full rounded-md p-2 bg-gray-50 border border-gray-300 text-gray-900"
-      value={selectedDspId}
-      onChange={e => setSelectedDspId(e.target.value)}
-    >
-      <option value="">Select DSP</option>
-      {activeDsps && activeDsps.length > 0 ? (
-        activeDsps.map(dsp => (
-          <option key={dsp._id} value={dsp._id}>
-            {dsp.name} ({dsp.email})
-          </option>
-        ))
-      ) : (
-        <option disabled>No active DSPs available</option>
-      )}
-    </select>
-    <button
-      className="mt-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-      onClick={() => handleAssignDsp(order._id, selectedDspId)}
-      disabled={!selectedDspId}
-    >
-      Assign DSP
-    </button>
-  </div>
+         
         </div>
 
         {order.orderStatus === 'CONFIRMED' && (

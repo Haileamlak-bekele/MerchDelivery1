@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { default: DspMerchantChatScreen } = require('../../../../mobile/dspapp/components/chatComponent');
 const Schema = mongoose.Schema;
 
 const orderSchema = new Schema({
@@ -50,7 +51,7 @@ const orderSchema = new Schema({
   },
   orderStatus: {
     type: String,
-    enum: ['PENDING', 'CONFIRMED', 'DELIVERED', 'CANCELLED'],
+    enum: ['PENDING', 'CONFIRMED', 'DELIVERED', 'CANCELLED','DspAssigned','DspAcceppted'],
     default: 'PENDING'
   },
   dspAssigned: {

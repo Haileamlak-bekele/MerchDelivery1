@@ -4,7 +4,7 @@ import { io } from 'socket.io-client';
 import Toast from 'react-native-root-toast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SOCKET_URL = 'http://192.168.188.100:5000';
+const SOCKET_URL = 'http://192.168.4.182:5000';
 
 const DspMerchantChatScreen = ({ route }) => {
   const { merchantId, dspId } = route.params;
@@ -23,7 +23,7 @@ const DspMerchantChatScreen = ({ route }) => {
   // Fetch chat history from backend
   useEffect(() => {
     fetch(
-      `http://192.168.188.100:5000/messages/history?user1=${dspId}&user2=${merchantId}`
+      `http://192.168.4.182:5000/messages/history?user1=${dspId}&user2=${merchantId}`
     )
       .then((res) => res.json())
       .then((data) => setMessages(data))
@@ -59,7 +59,7 @@ console.log("hi",userId,dspId);
 
     // 2. Store in the database via REST API
     try {
-      await fetch('http://192.168.188.100:5000/messages/send', {
+      await fetch('http://192.168.4.182:5000/messages/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(msg),

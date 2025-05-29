@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
+import ComplaintsSection from '../components/ComplaintsSection';
 import {
   LayoutDashboard,
   Users,
@@ -117,6 +118,8 @@ function AdminDashboard({ darkMode, setDarkMode }) {
         return <DeliveryPriceSection />;
       case 'deliveries':
         return <DeliveriesSection />;
+        case 'complaints':
+        return <ComplaintsSection />;
       case 'settings':
         return <SettingsSection />;
       default:
@@ -131,6 +134,7 @@ function AdminDashboard({ darkMode, setDarkMode }) {
     { id: 'merchants', label: 'Merchant', icon: ShoppingCart  },
     { id: 'dsp', label: 'DSP', icon: Truck  },
     { id: 'delivery-prices', label: 'Delivery Prices', icon: DollarSign  },
+    { id: 'complaints', label: 'complaints', icon: Box },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
@@ -184,21 +188,7 @@ function AdminDashboard({ darkMode, setDarkMode }) {
 
           {/* Sidebar Footer */}
           <div className="mt-auto p-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <UserCircle className="h-8 w-8 text-gray-500 dark:text-gray-400" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-800 dark:text-white">Admin User</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Super Admin</p>
-                </div>
-              </div>
-              <button
-                onClick={toggleDarkMode}
-                className="p-1 rounded-full text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
-              >
-                {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </button>
-            </div>
+
           </div>
         </div>
       </aside>
@@ -230,94 +220,7 @@ function AdminDashboard({ darkMode, setDarkMode }) {
           </div>
 
           {/* Right side icons/profile */}
-          <div className="flex items-center space-x-4">
-            {/* Notifications */}
-            <div className="relative">
-              <button
-                onClick={() => {
-                  setNotificationsOpen(!notificationsOpen);
-                  setProfileOpen(false);
-                }}
-                className="p-1 rounded-full text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none relative"
-              >
-                <Bell className="h-6 w-6" />
-                {notifications.some(n => !n.read) && (
-                  <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
-                )}
-              </button>
-              {notificationsOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden z-50 border border-gray-200 dark:border-gray-700">
-                  <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                    <p className="text-sm font-medium text-gray-800 dark:text-white">Notifications</p>
-                  </div>
-                  <div className="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto">
-                    {notifications.map((notification) => (
-                      <div
-                        key={notification.id}
-                        className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${!notification.read ? 'bg-emerald-50/50 dark:bg-emerald-900/20' : ''}`}
-                      >
-                        <p className="text-sm font-medium text-gray-800 dark:text-white">{notification.title}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{notification.message}</p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{notification.time}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-center">
-                    <button className="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300">
-                      View all notifications
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Profile Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => {
-                  setProfileOpen(!profileOpen);
-                  setNotificationsOpen(false);
-                }}
-                className="flex items-center space-x-2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
-              >
-                <div className="h-8 w-8 rounded-full bg-emerald-500 flex items-center justify-center text-white">
-                  <UserCircle className="h-6 w-6" />
-                </div>
-                <span className="hidden md:inline text-sm font-medium text-gray-700 dark:text-gray-300">Admin</span>
-                <ChevronDown className="hidden md:inline h-4 w-4 text-gray-500 dark:text-gray-400" />
-              </button>
-              {profileOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-50 border border-gray-200 dark:border-gray-700">
-                  <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                    <p className="text-sm text-gray-800 dark:text-white">Signed in as</p>
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">admin@example.com</p>
-                  </div>
-                  <div className="py-1">
-                    <a
-                      href="#"
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      Your Profile
-                    </a>
-                    <a
-                      href="#"
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      Settings
-                    </a>
-                  </div>
-                  <div className="py-1 border-t border-gray-200 dark:border-gray-700">
-                    <button
-                      onClick={() => {}}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      Sign out
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+         
         </header>
 
         {/* Page Content */}

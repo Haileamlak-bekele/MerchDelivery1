@@ -8,7 +8,7 @@ import { io } from 'socket.io-client';
 import Toast from 'react-native-toast-message';
 
 
-const SOCKET_URL = 'http://192.168.188.100:5000';
+const SOCKET_URL = 'http://192.168.4.182:5000';
 
 const DSPDashboard = () => {
 
@@ -53,7 +53,7 @@ const DSPDashboard = () => {
     const fetchOrders = async () => {
       try {
         const token = await AsyncStorage.getItem('token');
-        const res = await fetch('http://192.168.188.100:5000/dsp/orders', {
+        const res = await fetch('http://192.168.4.182:5000/dsp/orders', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -90,7 +90,7 @@ const DSPDashboard = () => {
   const handleAccept = async (orderId) => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await fetch(`http://192.168.188.100:5000/orders/${orderId}/dsp-accept`, {
+      const res = await fetch(`http://192.168.4.182:5000/orders/${orderId}/dsp-accept`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -117,7 +117,7 @@ const DSPDashboard = () => {
   const handleReject = async (orderId) => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await fetch(`http://192.168.188.100:5000/orders/${orderId}/dsp-reject`, {
+      const res = await fetch(`http://192.168.4.182:5000/orders/${orderId}/dsp-reject`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -139,7 +139,7 @@ const DSPDashboard = () => {
   const handleCompleteDelivery = async (orderId) => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await fetch(`http://192.168.188.100:5000/orders/${orderId}/delivered`, {
+      const res = await fetch(`http://192.168.4.182:5000/orders/${orderId}/delivered`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -269,7 +269,7 @@ const DSPDashboard = () => {
   onPress={async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await fetch(`http://192.168.188.100:5000/orders/${order._id}/dsp-on-shipping`, {
+      const res = await fetch(`http://192.168.4.182:5000/orders/${order._id}/dsp-on-shipping`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

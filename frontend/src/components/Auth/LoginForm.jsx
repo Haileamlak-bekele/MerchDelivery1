@@ -33,7 +33,7 @@ const LoginForm = ({
                 setShow={setShowPassword}
                 error={errors.password}
             />
-            <div className="flex items-center justify-between text-sm pt-1">
+            {/* <div className="flex items-center justify-between text-sm pt-1">
                 <label htmlFor="remember-me" className="flex items-center cursor-pointer">
                     <input
                         id="remember-me"
@@ -52,7 +52,7 @@ const LoginForm = ({
                 >
                     Forgot password?
                 </button>
-            </div>
+            </div> */}
             {errors.form && <p className="mt-1 text-xs text-red-600 dark:text-red-500">{errors.form}</p>}
             <button
                 type="submit"

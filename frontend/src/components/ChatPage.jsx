@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const SOCKET_URL = "http://192.168.188.100:5000";
+const SOCKET_URL = "http://192.168.4.182:5000";
 
 const ChatPage = () => {
   const [messages, setMessages] = useState([]);
@@ -51,7 +51,7 @@ const ChatPage = () => {
 
   useEffect(() => {
     fetch(
-      `http://192.168.188.100:5000/messages/history?user1=${merchantId}&user2=${dspId}`
+      `http://192.168.4.182:5000/messages/history?user1=${merchantId}&user2=${dspId}`
     )
       .then((res) => res.json())
       .then((data) => setMessages(data))
@@ -84,7 +84,7 @@ const ChatPage = () => {
     socketRef.current.emit("sendMessage", msg);
 
     try {
-      await fetch("http://192.168.188.100:5000/messages/send", {
+      await fetch("http://1192.168.4.182:5000/messages/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(msg),
